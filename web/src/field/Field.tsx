@@ -2,14 +2,15 @@ import { BrowserSVG, PersonSVG } from '@ensdomains/thorin';
 import { FC, ReactNode } from 'react';
 import { BsTwitterX } from 'react-icons/bs';
 import {
-    FaBookOpen,
-    FaBookReader,
+    FaBitcoin,
     FaDiscord,
+    FaDrawPolygon,
     FaEthereum,
     FaGithub,
+    FaScroll,
     FaTelegramPlane,
 } from 'react-icons/fa';
-import { FiAlignJustify, FiClock } from 'react-icons/fi';
+import { FiAlignJustify, FiClock, FiGlobe } from 'react-icons/fi';
 
 const field_record_to_icon: Record<string, ReactNode> = {
     'com.twitter': <BsTwitterX />,
@@ -20,7 +21,11 @@ const field_record_to_icon: Record<string, ReactNode> = {
     'com.github': <FaGithub />,
     description: <FiAlignJustify />,
     timezone: <FiClock />,
-    60: <FaEthereum />,
+    '60': <FaEthereum />,
+    '2147483785': <FaDrawPolygon />, // Polygon
+    '2147483658': <FiGlobe />, // Optimism
+    '2148018000': <FaScroll />, // Scroll
+    '0': <FaBitcoin />,
 };
 
 const field_placeholders: Record<string, string> = {

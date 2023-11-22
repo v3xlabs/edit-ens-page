@@ -314,12 +314,27 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             value={data.records['com.github']}
                             editable={editable}
                         />
-                        <Field
-                            label="Ethereum Address"
-                            record="60"
-                            value={data.addresses['60']}
-                            editable={editable}
-                        />
+                        {
+                            // Chains
+                            [
+                                ['60', 'eth', 'Ethereum Address'],
+                                ['0', 'btc', 'Bitcoin Address'],
+                                ['2147483785', 'polygon', 'Polygon Address'],
+                                ['2147483658', 'optimism', 'Optimism Address'],
+                                ['2148018000', 'scroll', 'Scroll Address'],
+                            ].map(([chainId, chainName, chainLabel]) => (
+                                <Field
+                                    key={chainId}
+                                    label={chainLabel}
+                                    record={chainId.toString()}
+                                    value={
+                                        data.addresses[chainId.toString()] ??
+                                        data.addresses[chainName]
+                                    }
+                                    editable={editable}
+                                />
+                            ))
+                        }
                         {DEVELOPER_MODE && (
                             <Field
                                 label="Resolver"
