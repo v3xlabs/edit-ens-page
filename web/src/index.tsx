@@ -1,21 +1,5 @@
-export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
+import { createRoot } from 'react-dom/client';
 
-type ProfileResponse = {
-    name: string;
-    records: Record<string, string>;
-    addresses: Record<string, string>;
-};
+import { App } from './App';
 
-export const getProfile = async (name: string) => {
-    const request = await fetch(GATEWAY_VIEW + name);
-
-    const data: ProfileResponse = await request.json();
-
-    return data;
-};
-
-(async () => {
-    const profile = await getProfile('luc.willbreak.eth');
-
-    console.log(profile);
-})();
+createRoot(document.querySelector('#root')).render(<App />);
