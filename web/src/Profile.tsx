@@ -134,7 +134,6 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         canChangeResolver;
 
     const newPayload = {
-        name: 'v3x.eth',
         records: {
             name: 'v3x.eth',
             avatar: 'https://gateway.pinata.cloud/ipfs/QmVQaX2H1v6Qc7z3j7KQq6Q8Y8X4iCqYQ2V1xZJ6JkqL6Z',
@@ -145,7 +144,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
             'com.github': 'v3x.eth',
         },
         addresses: {
-            '60': '0x6bf9Ea00A82797bCB5c94ba86fA3f68f6dB090a6',
+            '60': '0x225f137127d9067788314bc7fcc1f36746a3c3B5',
         },
     };
 
@@ -162,9 +161,11 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     });
 
     const mutateProfile = async () => {
+        console.log('signing message');
         // @ts-ignore
         const x = await signMessageAsync();
 
+        console.log('sending message');
         await postUpdateProfile(name, message, x);
     };
 
@@ -250,6 +251,12 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                         value={data.records['com.github']}
                         editable={editable}
                     />
+                    <Field
+                        label="Ethereum Address"
+                        record="60"
+                        value={data.addresses['60']}
+                        editable={editable}
+                    />
                     {DEVELOPER_MODE && (
                         <Field
                             label="Resolver"
@@ -275,7 +282,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                 hasChanges ? 'btn-primary' : 'btn-disabled'
                             )}
                             onClick={() => {
-                                hasChanges && mutateProfile();
+                                mutateProfile();
+                                // hasChanges && mutateProfile();
                             }}
                             disabled={!hasChanges}
                         >
