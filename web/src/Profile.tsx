@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { FC, PropsWithChildren } from 'react';
 import useSWR from 'swr';
 import { namehash } from 'viem';
@@ -138,6 +139,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         });
     };
 
+    const hasChanges = false;
+
     if (!data) return <div>Loading...</div>;
 
     return (
@@ -238,8 +241,14 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                 {editable && (
                     <FloatingButton>
                         <button
-                            className="btn btn-primary btn-pad btn-full"
-                            onClick={() => mutateProfile()}
+                            className={clsx(
+                                'btn btn-pad btn-full',
+                                hasChanges ? 'btn-primary' : 'btn-disabled'
+                            )}
+                            onClick={() => {
+                                hasChanges && mutateProfile();
+                            }}
+                            disabled={!hasChanges}
                         >
                             Update profile
                         </button>

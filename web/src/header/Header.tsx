@@ -26,14 +26,14 @@ export const Header: FC<{ onClose: () => void }> = ({ onClose }) => {
                         <a
                             href={'https://ens.app/' + name}
                             target="_blank"
-                            className="btn btn-outline btn-full text-start flex items-center gap-2"
+                            className="btn btn-outline btn-pad btn-full text-start flex items-center gap-2"
                         >
                             <EnsSVG />
                             <div className="w-full">View name in ENS App</div>
                             <FiChevronRight />
                         </a>
                     )}
-                    <button className="btn btn-outline btn-full text-start flex justify-between !px-3">
+                    <button className="btn btn-outline btn-pad btn-full text-start flex justify-between !px-3">
                         <div>Theme</div>
                         <div>
                             <div className="block dark:hidden">Light</div>
