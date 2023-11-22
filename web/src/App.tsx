@@ -32,7 +32,7 @@ export const App = () => {
     // return <div>{JSON.stringify(data)}</div>;
 
     return (
-        <div className="w-full mx-auto max-w-xl px-4 pt-8 flex flex-col gap-4">
+        <div className="w-full mx-auto max-w-xl px-4 pt-8 pb-16 flex flex-col gap-4">
             <div className="flex justify-between items-center">
                 <div>ENS</div>
                 <div>
