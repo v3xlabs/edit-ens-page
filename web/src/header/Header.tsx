@@ -14,23 +14,25 @@ const icons: [ReactNode, string][] = [
     [<FiBook />, 'https://blog.ens.domains'],
 ];
 
-export const Header: FC<{ name; onClose: () => void }> = ({
-    onClose,
-    name,
-}) => {
+export const Header: FC<{ onClose: () => void }> = ({ onClose }) => {
+    // eslint-disable-next-line no-undef
+    const name = location?.pathname.slice(1);
+
     return (
         <div className="z-50 absolute">
             <Dialog onClose={onClose} variant="top" closeVariant="center">
                 <div className="space-y-4">
-                    <a
-                        href={'https://ens.app/' + name}
-                        target="_blank"
-                        className="btn btn-outline btn-full text-start flex items-center gap-2"
-                    >
-                        <EnsSVG />
-                        <div className="w-full">View name in ENS App</div>
-                        <FiChevronRight />
-                    </a>
+                    {name?.length > 0 && (
+                        <a
+                            href={'https://ens.app/' + name}
+                            target="_blank"
+                            className="btn btn-outline btn-full text-start flex items-center gap-2"
+                        >
+                            <EnsSVG />
+                            <div className="w-full">View name in ENS App</div>
+                            <FiChevronRight />
+                        </a>
+                    )}
                     <button className="btn btn-outline btn-full text-start flex justify-between !px-3">
                         <div>Theme</div>
                         <div>
