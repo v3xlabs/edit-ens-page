@@ -1,11 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit your ENS</title>
-</head>
-<body>
-    <div>Hello world</div>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Edit your ENS</title>
+        <link rel="stylesheet" href="src/global.css" />
+    </head>
+    <body
+        class="bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary text-ens-light-text-primary dark:text-ens-dark-text-primary"
+    >
+        <div class="w-full mx-auto max-w-xl px-4 pt-8 flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <div>ENS</div>
+                <div>
+                    <button class="text-ens-light-text-accent dark:text-ens-dark-text-accent bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary rounded-3xl px-6 py-2">
+                        Connect
+                    </button>
+                </div>
+            </div>
+            <div class="px-4">
+                <div class="font-bold text-3xl">
+                    domico
+                </div>
+                <div class="text-xl">
+                    .walletconnect.eth
+                </div>
+            </div>
+            <div
+                class="flex flex-col gap-4 p-4 bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border border rounded-lg"
+            >
+                <div class="flex items-center justify-center">
+                    <div class="relative aspect-square h-40 w-40">
+                        <div class="aspect-square h-40 overflow-hidden w-40 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
+                            <div class="w-full h-full" style="background: linear-gradient(323deg, #DE82FF -15.56%, #7F6AFF 108.43%)">
+                                
+                            </div>
+                        </div>
+                        <div class="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                            E
+                        </div>
+                    </div>
+                </div>
+                <div class="">
+                    <label class="font-bold text-sm pl-2 py-1 block">
+                        Display Name
+                    </label>
+                    <div class="relative">
+                    <div class="absolute left-2 top-1/2 -translate-y-1/2">
+                        P
+                    </div>
+                    <input class="border bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border pl-8 rounded-md py-2 w-full" placeholder="Dom" />
+                </div>
+                </div>
+            </div>
+        </div>
+        <script type="module" src="./src/index.tsx"></script>
+    </body>
 </html>

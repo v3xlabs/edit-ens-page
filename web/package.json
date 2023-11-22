@@ -1,18 +1,28 @@
 {
-  "name": "web",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "vite build",
-    "dev": "vite",
-    "start": "vite"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "vite": "^5.0.2"
-  }
+    "name": "web",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "vite build",
+        "dev": "vite",
+        "start": "vite",
+        "lint": "eslint -c .eslintrc.json --ext .ts ./src"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "autoprefixer": "^10.4.16",
+        "postcss": "^8.4.31",
+        "tailwindcss": "^3.3.5",
+        "vite": "^5.0.2"
+    },
+    "devDependencies": {
+        "@typescript-eslint/parser": "^6.12.0",
+        "eslint": "^8.54.0",
+        "eslint-plugin-v3xlabs": "^1.6.2",
+        "typescript": "^5.3.2"
+    }
 }
