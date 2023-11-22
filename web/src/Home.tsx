@@ -28,7 +28,7 @@ export const Home = () => {
                 <a
                     href={'/' + name}
                     className={clsx(
-                        'block text-center btn btn-full',
+                        'block text-center btn btn-pad btn-full',
                         name.length > 0 ? 'btn-primary' : 'btn-disabled'
                     )}
                     aria-disabled={name.length === 0}

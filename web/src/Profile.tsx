@@ -238,7 +238,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                 {editable && (
                     <FloatingButton>
                         <button
-                            className="btn btn-primary btn-full"
+                            className="btn btn-primary btn-pad btn-full"
                             onClick={() => mutateProfile()}
                         >
                             Update profile

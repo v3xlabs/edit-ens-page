@@ -15,7 +15,6 @@ export const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
                     onClose={() => {
                         setHeaderExpanded(false);
                     }}
-                    name={location?.href?.replace('/', '')}
                 />
             )}
             <div className="w-full mx-auto max-w-xl px-4 pt-8 pb-16 flex flex-col gap-4">

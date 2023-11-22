@@ -4,7 +4,11 @@
 @tailwind variants;
 
 .btn {
-    @apply rounded-xl p-2;
+    @apply rounded-xl;
+}
+
+.btn-pad {
+    @apply py-3 px-4;
 }
 
 .btn.btn-primary {

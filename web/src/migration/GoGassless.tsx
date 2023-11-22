@@ -8,7 +8,7 @@ export const GoGassless: FC<{ name: string }> = ({ name }) => {
     return (
         <>
             <button
-                className="z-10 w-full max-w-2xs md:max-w-full mx-auto btn btn-primary"
+                className="z-10 max-w-2xs md:max-w-full mx-auto btn btn-pad btn-primary btn-full"
                 onClick={() => {
                     console.log('Go Gassless');
                     setIsOpen(true);

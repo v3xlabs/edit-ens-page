@@ -67,7 +67,7 @@ export const SetResolverModal: FC<{
                     <div className="gap-2 flex flex-col">
                         <button
                             onClick={onClosez}
-                            className="w-full p-4 rounded-xl bg-ens-light-blue-surface text-ens-light-blue-dim dark:bg-ens-dark-blue-surface dark:text-ens-dark-blue-dim"
+                            className="btn btn-secondary btn-pad btn-full"
                         >
                             Back
                         </button>
@@ -75,7 +75,7 @@ export const SetResolverModal: FC<{
                             onClick={() => {
                                 write();
                             }}
-                            className="relative flex items-center justify-center w-full p-4 rounded-xl bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
+                            className="relative flex items-center justify-center btn btn-primary btn-pad btn-full"
                         >
                             Update Resolver
                             {isLoading && (
@@ -90,7 +90,7 @@ export const SetResolverModal: FC<{
                                     onClick={() => {
                                         setTestReceiptOpen(true);
                                     }}
-                                    className="relative flex items-center justify-center w-full p-4 rounded-xl bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
+                                    className="relative flex items-center justify-center btn btn-primary btn-pad btn-full"
                                 >
                                     Test Transaction Receipt
                                 </button>
