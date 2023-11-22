@@ -62,7 +62,7 @@ export const App = () => {
                                     <img
                                         src={data.records['avatar']}
                                         alt="avatar"
-                                        className="w-full h-full"
+                                        className="w-full h-full object-cover"
                                     />
                                 )}
                             </div>
