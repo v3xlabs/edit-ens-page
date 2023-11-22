@@ -1,6 +1,6 @@
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
-import { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren, useState } from 'react';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -12,6 +12,7 @@ import {
 
 import { DEVELOPER_MODE } from './App';
 import { Field } from './field/Field';
+import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
@@ -170,6 +171,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         await postUpdateProfile(name, message, x);
     };
 
+    const [startAvatarFlow, setStartAvatarFlow] = useState(false);
+
     const hasChanges = true;
 
     if (!data) return <div>Loading...</div>;
@@ -228,13 +231,26 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                 </div>
                             </div>
                             {editable && (
-                                <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                                <button
+                                    onClick={() => {
+                                        setStartAvatarFlow(true);
+                                    }}
+                                    className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center"
+                                >
                                     <img
                                         src="/pencil.svg"
                                         alt="pencil"
                                         className="h-[1em] fill-ens-light-text-accent"
                                     />
-                                </div>
+                                </button>
+                            )}
+                            {startAvatarFlow && (
+                                <AvatarSetFlow
+                                    name={name}
+                                    onClose={() => {
+                                        setStartAvatarFlow(false);
+                                    }}
+                                />
                             )}
                         </div>
                     </div>

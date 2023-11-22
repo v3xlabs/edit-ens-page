@@ -34,7 +34,7 @@ export const Dialog: FC<
 
     return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-        <div tabIndex={-1} className="z-10">
+        <div tabIndex={-1} className="fixed z-50">
             <div className="fixed z-0 inset-0 bg-ens-light-grey-active/20 dark:bg-ens-light-grey-active/20 backdrop-blur-md"></div>
             <div
                 className={clsx(
