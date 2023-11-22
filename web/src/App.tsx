@@ -1,13 +1,17 @@
 import { MenuSVG } from '@ensdomains/thorin';
 import useSWR from 'swr';
-import { useAccount } from 'wagmi';
+import { namehash } from 'viem';
+import { useAccount, useContractRead, useEnsResolver } from 'wagmi';
 
 import { Field } from './field/Field';
+import { GoGassless } from './migration/GoGassless';
 import { UserProfile } from './UserProfile';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
 export const ENSTATE_URL = 'https://worker.enstate.rs/n/';
+export const ENS_MAINNET_REGISTRY =
+    '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
 
 type ProfileResponse = {
     name: string;
@@ -76,6 +80,8 @@ const postUpdateProfile = async (name: string, data: ProfileDataPost) => {
     console.log({ response });
 };
 
+const DEVELOPER_MODE = true;
+
 export const App = () => {
     // eslint-disable-next-line no-undef
     const path = window.location.pathname;
@@ -87,7 +93,42 @@ export const App = () => {
     const { data } = useSWR(name, getProfile);
     const { address } = useAccount();
 
-    const editable = address && data && data?.addresses[60] == address;
+    const { data: ensResolver } = useEnsResolver({ name });
+    const { data: ownerData } = useContractRead({
+        address: ENS_MAINNET_REGISTRY,
+        abi: [
+            {
+                type: 'function',
+                name: 'owner',
+                stateMutability: 'view',
+                inputs: [
+                    {
+                        type: 'bytes32',
+                        name: 'node',
+                    },
+                ],
+                outputs: [
+                    {
+                        type: 'address',
+                        name: 'owner',
+                    },
+                ],
+            },
+        ],
+        functionName: 'owner',
+        args: [namehash(name)],
+    });
+
+    const isUsingOffchainResolver =
+        ensResolver?.toLowerCase() ===
+        '0xdCcB68ac05BB2Ee83F0873DCd0BF5F57E2968344'.toLowerCase();
+    const canChangeResolver =
+        ownerData?.toString().toLowerCase() === address?.toLowerCase();
+    const isOwner = data?.addresses[60] == address;
+    const editable = address && data && isUsingOffchainResolver && isOwner;
+
+    const shouldSuggestGassless =
+        !isUsingOffchainResolver && isOwner && canChangeResolver;
 
     const mutateProfile = () => {
         postUpdateProfile(name, {
@@ -108,7 +149,7 @@ export const App = () => {
             <div className="flex justify-between items-center pb-2">
                 <div className="flex gap-4 items-center">
                     <img src="/mark.svg" alt="mark" className="h-12" />
-                    <button onClick={() => { }}>
+                    <button onClick={() => {}}>
                         <MenuSVG />
                     </button>
                 </div>
@@ -192,6 +233,22 @@ export const App = () => {
                         value={data.records['com.github']}
                         editable={editable}
                     />
+                    {DEVELOPER_MODE && (
+                        <Field
+                            label="Resolver"
+                            record="resolver"
+                            editable={false}
+                            value={ensResolver ?? '...'}
+                        />
+                    )}
+                    {DEVELOPER_MODE && ownerData && (
+                        <Field
+                            label="Owner"
+                            record="owner"
+                            editable={false}
+                            value={ownerData.toString()}
+                        />
+                    )}
                 </div>
                 {editable && (
                     <div className="fixed md:relative bottom-0 inset-x-0 w-full">
@@ -206,6 +263,7 @@ export const App = () => {
                         </div>
                     </div>
                 )}
+                {shouldSuggestGassless && <GoGassless name={name} />}
             </div>
         </div>
     );
