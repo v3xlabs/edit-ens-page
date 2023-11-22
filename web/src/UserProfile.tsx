@@ -15,12 +15,12 @@ export const UserProfile: FC = () => {
     if (address) {
         return (
             <button
-                className="flex items-center gap-2 p-1 pr-6 justify-center rounded-3xl bg-ens-light-background-primary dark:bg-ens-dark-background-primary"
+                className="flex h-12 items-center gap-2 pl-1.5 pr-6 justify-center rounded-3xl bg-ens-light-background-primary dark:bg-ens-dark-background-primary"
                 onClick={() => {
                     disconnect();
                 }}
             >
-                <div className="w-8 aspect-square rounded-full overflow-hidden bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
+                <div className="w-9 aspect-square rounded-full overflow-hidden bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
                     {avatar && (
                         <img
                             src={avatar}
@@ -39,7 +39,7 @@ export const UserProfile: FC = () => {
             onClick={() => {
                 open();
             }}
-            className="text-ens-light-text-accent dark:text-ens-dark-text-accent bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary rounded-3xl px-6 py-2"
+            className="text-ens-light-text-accent dark:text-ens-dark-text-accent bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary rounded-3xl px-12 py-2 h-full"
         >
             Connect
         </button>

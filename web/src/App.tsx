@@ -1,7 +1,8 @@
+import { MenuSVG } from '@ensdomains/thorin';
 import useSWR from 'swr';
 
-import { UserProfile } from './UserProfile.tsx';
 import { Field } from './field/Field';
+import { UserProfile } from './UserProfile.tsx';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 
@@ -30,13 +31,16 @@ export const App = () => {
 
     if (!data) return <div>Loading...</div>;
 
-    // return <div>{JSON.stringify(data)}</div>;
-
     return (
         <div className="w-full mx-auto max-w-xl px-4 pt-8 pb-16 flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-                <div>ENS</div>
-                <div>
+            <div className="flex justify-between items-center pb-2">
+                <div className="flex gap-4 items-center">
+                    <img src="/mark.svg" alt="mark" className="h-12" />
+                    <button onClick={() => {}}>
+                        <MenuSVG />
+                    </button>
+                </div>
+                <div className="h-12">
                     <UserProfile />
                 </div>
             </div>
