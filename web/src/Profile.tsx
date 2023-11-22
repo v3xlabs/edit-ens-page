@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
-import { FC, PropsWithChildren, useState } from 'react';
+import { FC, PropsWithChildren, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -11,11 +12,12 @@ import {
 } from 'wagmi';
 
 import { DEVELOPER_MODE } from './App';
-import { Field } from './field/Field';
+import { Field, FieldNew } from './field/Field';
 import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
+import { EnsRecord, SupportedRecords } from './records';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
@@ -112,6 +114,39 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     const { data } = useSWR(name, getProfile);
     const { address } = useAccount();
 
+    const [profileRecords, setProfileRecords] = useState<EnsRecord[]>([]);
+
+    useEffect(() => {
+        if (!data) return;
+
+        const records: EnsRecord[] = [];
+
+        Object.entries(data.records).map(([record, value]) => {
+            const supportedRecord = SupportedRecords[record];
+
+            if (!supportedRecord) {
+                records.push({
+                    type: 'arbitrary',
+                    hidden: false,
+                    value,
+                    record,
+                });
+
+                return;
+            }
+
+            records.push({
+                ...supportedRecord,
+                value,
+                record,
+            });
+        });
+
+        console.log(records);
+
+        setProfileRecords(records);
+    }, [data]);
+
     const { data: ensResolver, isSuccess: isEnsResolverFinished } =
         useEnsResolver({ name });
     const { data: ownerData } = useContractRead({
@@ -192,6 +227,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     const [startAvatarFlow, setStartAvatarFlow] = useState(false);
 
     const hasChanges = true;
+
+    const { register } = useForm();
 
     if (!data) return <div>Loading...</div>;
 
@@ -277,9 +314,21 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                         </div>
                     </div>
                 </div>
-                <div className="p-4 w-full space-y-4">
+                <form className="p-4 w-full space-y-4">
                     <div className="w-full flex flex-col gap-2">
-                        <Field
+                        {editable ? (
+                            <h1>Yeet</h1>
+                        ) : (
+                            profileRecords.map((record) => (
+                                <FieldNew
+                                    key={record.record}
+                                    record={record}
+                                    editable={editable}
+                                    register={register(record.record)}
+                                />
+                            ))
+                        )}
+                        {/* <Field
                             label="Display Name"
                             record="name"
                             value={data.records['name']}
@@ -332,7 +381,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             record="com.github"
                             value={data.records['com.github']}
                             editable={editable}
-                        />
+                        /> */}
                         {
                             // Chains
                             [
@@ -393,7 +442,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             <GoGassless name={name} />
                         </FloatingButton>
                     )}
-                </div>
+                </form>
             </div>
             <Footer />
         </Layout>
