@@ -1,8 +1,14 @@
+/* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
 import { FC, PropsWithChildren } from 'react';
 import useSWR from 'swr';
 import { namehash } from 'viem';
-import { useAccount, useContractRead, useEnsResolver } from 'wagmi';
+import {
+    useAccount,
+    useContractRead,
+    useEnsResolver,
+    useSignMessage,
+} from 'wagmi';
 
 import { DEVELOPER_MODE } from './App';
 import { Field } from './field/Field';
@@ -61,17 +67,17 @@ export const getProfile = async (name: string) => {
     return { ...data, records: data.records, addresses: data.chains };
 };
 
-type ProfileDataPost = {
-    name: string;
-    records: Record<string, string>;
-    addresses: Record<string, string>;
-    auth: 'yes';
-};
-
-const postUpdateProfile = async (name: string, data: ProfileDataPost) => {
+const postUpdateProfile = async (
+    name: string,
+    data: string,
+    signature: string
+) => {
     const request = await fetch(GATEWAY_UPDATE, {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+            payload: data,
+            auth: signature,
+        }),
         headers: {
             'Content-Type': 'application/json',
         },
@@ -127,19 +133,42 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         isOwner &&
         canChangeResolver;
 
-    const mutateProfile = () => {
-        postUpdateProfile(name, {
-            name: name,
-            records: {
-                ...data.records,
-                'com.discord': 'lucemans',
-            },
-            addresses: data.addresses,
-            auth: 'yes',
-        });
+    const newPayload = {
+        name: 'v3x.eth',
+        records: {
+            name: 'v3x.eth',
+            avatar: 'https://gateway.pinata.cloud/ipfs/QmVQaX2H1v6Qc7z3j7KQq6Q8Y8X4iCqYQ2V1xZJ6JkqL6Z',
+            url: 'https://v3x.eth.link',
+            'com.twitter': 'v3x.eth',
+            'org.telegram': 'v3x.eth',
+            'com.discord': 'v3x.eth',
+            'com.github': 'v3x.eth',
+        },
+        addresses: {
+            '60': '0x6bf9Ea00A82797bCB5c94ba86fA3f68f6dB090a6',
+        },
     };
 
-    const hasChanges = false;
+    const payload = {
+        name,
+        records: newPayload.records,
+        addresses: newPayload.addresses,
+        time: Date.now(),
+    };
+    const message = JSON.stringify(payload);
+
+    const { signMessageAsync } = useSignMessage({
+        message,
+    });
+
+    const mutateProfile = async () => {
+        // @ts-ignore
+        const x = await signMessageAsync();
+
+        await postUpdateProfile(name, message, x);
+    };
+
+    const hasChanges = true;
 
     if (!data) return <div>Loading...</div>;
 

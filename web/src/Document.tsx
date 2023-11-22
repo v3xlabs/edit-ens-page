@@ -14,7 +14,7 @@ const projectId = 'b451d5ff25d61b3fde7b30f167a5a957';
 // 2. Create wagmiConfig
 const { chains, publicClient } = configureChains(
     [mainnet],
-    [walletConnectProvider({ projectId }), publicProvider()]
+    [/* walletConnectProvider({ projectId }), */ publicProvider()]
 );
 
 const metadata = {
