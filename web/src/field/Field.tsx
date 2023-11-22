@@ -22,13 +22,17 @@ const field_placeholders: Record<string, string> = {
     url: 'https://example.com',
 };
 
-export const Field: FC<{ label: string; record: string; value: string }> = ({
-    label,
-    record,
-    value,
-}) => {
+export const Field: FC<{
+    label: string;
+    record: string;
+    value: string;
+    editable: boolean;
+}> = ({ label, record, value, editable }) => {
     const field_icon = field_record_to_icon[record];
     const field_placeholder = field_placeholders[record];
+
+    // hide empty fields
+    if (!editable && !value) return;
 
     return (
         <div className="">
@@ -41,6 +45,7 @@ export const Field: FC<{ label: string; record: string; value: string }> = ({
                     className="border bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border pl-9 rounded-md py-2 w-full"
                     placeholder={field_placeholder}
                     value={value}
+                    readOnly={!editable}
                 />
             </div>
         </div>

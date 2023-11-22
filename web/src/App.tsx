@@ -32,6 +32,8 @@ export const App = () => {
     const { data } = useSWR(name, getProfile);
     const { address } = useAccount();
 
+    const editable = address && data && data?.addresses[60] == address;
+
     if (!data) return <div>Loading...</div>;
 
     return (
@@ -39,7 +41,7 @@ export const App = () => {
             <div className="flex justify-between items-center pb-2">
                 <div className="flex gap-4 items-center">
                     <img src="/mark.svg" alt="mark" className="h-12" />
-                    <button onClick={() => {}}>
+                    <button onClick={() => { }}>
                         <MenuSVG />
                     </button>
                 </div>
@@ -75,9 +77,13 @@ export const App = () => {
                                 )}
                             </div>
                         </div>
-                        {address && (
+                        {editable && (
                             <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
-                                E
+                                <img
+                                    src="/pencil.svg"
+                                    alt="pencil"
+                                    className="h-[1em] fill-ens-light-text-accent"
+                                />
                             </div>
                         )}
                     </div>
@@ -87,34 +93,40 @@ export const App = () => {
                         label="Display Name"
                         record="name"
                         value={data.records['display']}
+                        editable={editable}
                     />
                     <Field
                         label="Website"
                         record="url"
                         value={data.records['url']}
+                        editable={editable}
                     />
                     <Field
                         label="X"
                         record="com.twitter"
                         value={data.records['com.twitter']}
+                        editable={editable}
                     />
                     <Field
                         label="Telegram"
                         record="org.telegram"
                         value={data.records['org.telegram']}
+                        editable={editable}
                     />
                     <Field
                         label="Discord"
                         record="com.discord"
                         value={data.records['com.discord']}
+                        editable={editable}
                     />
                     <Field
                         label="Github"
                         record="com.github"
                         value={data.records['com.github']}
+                        editable={editable}
                     />
                 </div>
-                {address && (
+                {editable && (
                     <div className="fixed md:relative bottom-0 inset-x-0 w-full">
                         <div className="relative w-full flex justify-center p-3 md:p-0">
                             <button className="z-10 w-full rounded-4xl p-2 max-w-2xs md:max-w-full mx-auto bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
