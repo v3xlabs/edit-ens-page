@@ -6,6 +6,7 @@ import { Field } from './field/Field';
 import { UserProfile } from './UserProfile';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
+export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
 export const ENSTATE_URL = 'https://worker.enstate.rs/n/';
 
 type ProfileResponse = {
@@ -54,6 +55,27 @@ export const getProfile = async (name: string) => {
     return { ...data, records: data.records, addresses: data.chains };
 };
 
+type ProfileDataPost = {
+    name: string;
+    records: Record<string, string>;
+    addresses: Record<string, string>;
+    auth: 'yes';
+};
+
+const postUpdateProfile = async (name: string, data: ProfileDataPost) => {
+    const request = await fetch(GATEWAY_UPDATE, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    const response = await request.text();
+
+    console.log({ response });
+};
+
 export const App = () => {
     // eslint-disable-next-line no-undef
     const path = window.location.pathname;
@@ -66,6 +88,18 @@ export const App = () => {
     const { address } = useAccount();
 
     const editable = address && data && data?.addresses[60] == address;
+
+    const mutateProfile = () => {
+        postUpdateProfile(name, {
+            name: name,
+            records: {
+                ...data.records,
+                'com.discord': 'lucemans',
+            },
+            addresses: data.addresses,
+            auth: 'yes',
+        });
+    };
 
     if (!data) return <div>Loading...</div>;
 
@@ -125,7 +159,7 @@ export const App = () => {
                     <Field
                         label="Display Name"
                         record="name"
-                        value={data.records['display']}
+                        value={data.records['name']}
                         editable={editable}
                     />
                     <Field
@@ -162,7 +196,10 @@ export const App = () => {
                 {editable && (
                     <div className="fixed md:relative bottom-0 inset-x-0 w-full">
                         <div className="relative w-full flex justify-center p-3 md:p-0">
-                            <button className="z-10 h-12 w-full rounded-4xl p-2 max-w-2xs md:max-w-full mx-auto bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
+                            <button
+                                className="z-10 h-12 w-full rounded-4xl p-2 max-w-2xs md:max-w-full mx-auto bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
+                                onClick={() => mutateProfile()}
+                            >
                                 Update profile
                             </button>
                             <div className="md:hidden bg-gradient-to-t from-black/20 to-black/0 absolute inset-0"></div>
