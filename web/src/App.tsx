@@ -1,10 +1,11 @@
 import { MenuSVG } from '@ensdomains/thorin';
-import { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren, useState } from 'react';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import { useAccount, useContractRead, useEnsResolver } from 'wagmi';
 
 import { Field } from './field/Field';
+import { Header } from './header/Header';
 import { GoGassless } from './migration/GoGassless';
 import { UserProfile } from './UserProfile';
 
@@ -147,131 +148,147 @@ export const App = () => {
         });
     };
 
+    const [headerExpanded, setHeaderExpanded] = useState(false);
+
     if (!data) return <div>Loading...</div>;
 
     return (
-        <div className="w-full mx-auto max-w-xl px-4 pt-8 pb-16 flex flex-col gap-4">
-            <div className="flex justify-between items-center pb-2">
-                <div className="flex gap-4 items-center">
-                    <img src="/mark.svg" alt="mark" className="h-12" />
-                    <button onClick={() => { }}>
-                        <MenuSVG />
-                    </button>
-                </div>
-                <div className="h-12">
-                    <UserProfile />
-                </div>
-            </div>
-            <div className="px-4">
-                <span className="block font-bold text-3xl">
-                    {name.split('.')[0]}
-                </span>
-                <span className="block text-xl">
-                    .{name.split('.').slice(1).join('.')}
-                </span>
-            </div>
-            <div className="relative flex flex-col items-center gap-4 p-4 bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border border rounded-2xl">
-                <div className="w-full flex items-center justify-center">
-                    <div className="relative aspect-square h-40 w-40">
-                        <div className="aspect-square h-40 overflow-hidden w-40 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
-                            <div
-                                className="w-full h-full"
-                                style={{
-                                    background:
-                                        'linear-gradient(323deg, #DE82FF -15.56%, #7F6AFF 108.43%)',
-                                }}
-                            >
-                                {data.records['avatar'] && (
-                                    <img
-                                        src={data.records['avatar']}
-                                        alt="avatar"
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </div>
-                        </div>
-                        {editable && (
-                            <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
-                                <img
-                                    src="/pencil.svg"
-                                    alt="pencil"
-                                    className="h-[1em] fill-ens-light-text-accent"
-                                />
-                            </div>
-                        )}
+        <>
+            {headerExpanded && (
+                <Header
+                    onClose={() => {
+                        setHeaderExpanded(false);
+                    }}
+                    name={name}
+                />
+            )}
+            <div className="w-full mx-auto max-w-xl px-4 pt-8 pb-16 flex flex-col gap-4">
+                <div className="flex justify-between items-center pb-2">
+                    <div className="flex gap-4 items-center">
+                        <img src="/mark.svg" alt="mark" className="h-12" />
+                        <button
+                            onClick={() => {
+                                setHeaderExpanded(true);
+                            }}
+                        >
+                            <MenuSVG />
+                        </button>
+                    </div>
+                    <div className="h-12">
+                        <UserProfile />
                     </div>
                 </div>
-                <div className="w-full flex flex-col gap-2">
-                    <Field
-                        label="Display Name"
-                        record="name"
-                        value={data.records['name']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Website"
-                        record="url"
-                        value={data.records['url']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="X"
-                        record="com.twitter"
-                        value={data.records['com.twitter']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Telegram"
-                        record="org.telegram"
-                        value={data.records['org.telegram']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Discord"
-                        record="com.discord"
-                        value={data.records['com.discord']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Github"
-                        record="com.github"
-                        value={data.records['com.github']}
-                        editable={editable}
-                    />
-                    {DEVELOPER_MODE && (
+                <div className="px-4">
+                    <span className="block font-bold text-3xl">
+                        {name.split('.')[0]}
+                    </span>
+                    <span className="block text-xl">
+                        .{name.split('.').slice(1).join('.')}
+                    </span>
+                </div>
+                <div className="relative flex flex-col items-center gap-4 p-4 bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border border rounded-2xl">
+                    <div className="w-full flex items-center justify-center">
+                        <div className="relative aspect-square h-40 w-40">
+                            <div className="aspect-square h-40 overflow-hidden w-40 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
+                                <div
+                                    className="w-full h-full"
+                                    style={{
+                                        background:
+                                            'linear-gradient(323deg, #DE82FF -15.56%, #7F6AFF 108.43%)',
+                                    }}
+                                >
+                                    {data.records['avatar'] && (
+                                        <img
+                                            src={data.records['avatar']}
+                                            alt="avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            {editable && (
+                                <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                                    <img
+                                        src="/pencil.svg"
+                                        alt="pencil"
+                                        className="h-[1em] fill-ens-light-text-accent"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="w-full flex flex-col gap-2">
                         <Field
-                            label="Resolver"
-                            record="resolver"
-                            editable={false}
-                            value={ensResolver ?? '...'}
+                            label="Display Name"
+                            record="name"
+                            value={data.records['name']}
+                            editable={editable}
                         />
+                        <Field
+                            label="Website"
+                            record="url"
+                            value={data.records['url']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="X"
+                            record="com.twitter"
+                            value={data.records['com.twitter']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Telegram"
+                            record="org.telegram"
+                            value={data.records['org.telegram']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Discord"
+                            record="com.discord"
+                            value={data.records['com.discord']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Github"
+                            record="com.github"
+                            value={data.records['com.github']}
+                            editable={editable}
+                        />
+                        {DEVELOPER_MODE && (
+                            <Field
+                                label="Resolver"
+                                record="resolver"
+                                editable={false}
+                                value={ensResolver ?? '...'}
+                            />
+                        )}
+                        {DEVELOPER_MODE && ownerData && (
+                            <Field
+                                label="Owner"
+                                record="owner"
+                                editable={false}
+                                value={ownerData.toString()}
+                            />
+                        )}
+                    </div>
+                    {editable && (
+                        <FloatingButton>
+                            <button
+                                className="btn btn-primary btn-full"
+                                onClick={() => mutateProfile()}
+                            >
+                                Update profile
+                            </button>
+                        </FloatingButton>
                     )}
-                    {DEVELOPER_MODE && ownerData && (
-                        <Field
-                            label="Owner"
-                            record="owner"
-                            editable={false}
-                            value={ownerData.toString()}
-                        />
+                    {shouldSuggestGassless && (
+                        <FloatingButton>
+                            <GoGassless name={name} />
+                        </FloatingButton>
                     )}
                 </div>
-                {editable && (
-                    <FloatingButton>
-                        <button
-                            className="btn btn-primary btn-full"
-                            onClick={() => mutateProfile()}
-                        >
-                            Update profile
-                        </button>
-                    </FloatingButton>
-                )}
-                {shouldSuggestGassless && (
-                    <FloatingButton>
-                        <GoGassless name={name} />
-                    </FloatingButton>
-                )}
             </div>
-        </div>
+        </>
     );
 };
 
