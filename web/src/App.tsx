@@ -61,6 +61,7 @@ export const App = () => {
                                 {data.records['avatar'] && (
                                     <img
                                         src={data.records['avatar']}
+                                        alt="avatar"
                                         className="w-full h-full"
                                     />
                                 )}
