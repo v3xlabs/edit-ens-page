@@ -196,7 +196,9 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             >
                                 {data.records['avatar'] && (
                                     <img
-                                        src={data.records['avatar']}
+                                        src={
+                                            'https://enstate.rs/i/' + data.name
+                                        }
                                         alt="avatar"
                                         className="w-full h-full object-cover"
                                     />
