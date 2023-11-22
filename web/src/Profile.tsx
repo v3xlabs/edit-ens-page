@@ -12,6 +12,7 @@ import {
 
 import { DEVELOPER_MODE } from './App';
 import { Field } from './field/Field';
+import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
 
@@ -247,15 +248,21 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             editable={editable}
                         />
                         <Field
-                            label="Website"
-                            record="url"
-                            value={data.records['url']}
+                            label="Pronouns"
+                            record="pronouns"
+                            value={data.records['pronouns']}
                             editable={editable}
                         />
                         <Field
                             label="Description"
                             record="description"
                             value={data.records['description']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Website"
+                            record="url"
+                            value={data.records['url']}
                             editable={editable}
                         />
                         <Field
@@ -268,6 +275,12 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             label="Telegram"
                             record="org.telegram"
                             value={data.records['org.telegram']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Timezone"
+                            record="timezone"
+                            value={data.records['timezone']}
                             editable={editable}
                         />
                         <Field
@@ -329,6 +342,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                     )}
                 </div>
             </div>
+            <Footer />
         </Layout>
     );
 };

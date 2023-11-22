@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { useState } from 'react';
 import { FiSearch } from 'react-icons/fi';
 
+import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 
 export const Home = () => {
@@ -36,6 +37,7 @@ export const Home = () => {
                     Go
                 </a>
             </div>
+            <Footer />
         </Layout>
     );
 };

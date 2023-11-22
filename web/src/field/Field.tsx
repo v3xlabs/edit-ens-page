@@ -2,11 +2,14 @@ import { BrowserSVG, PersonSVG } from '@ensdomains/thorin';
 import { FC, ReactNode } from 'react';
 import { BsTwitterX } from 'react-icons/bs';
 import {
+    FaBookOpen,
+    FaBookReader,
     FaDiscord,
     FaEthereum,
     FaGithub,
     FaTelegramPlane,
 } from 'react-icons/fa';
+import { FiAlignJustify, FiClock } from 'react-icons/fi';
 
 const field_record_to_icon: Record<string, ReactNode> = {
     'com.twitter': <BsTwitterX />,
@@ -15,6 +18,8 @@ const field_record_to_icon: Record<string, ReactNode> = {
     url: <BrowserSVG />,
     'com.discord': <FaDiscord />,
     'com.github': <FaGithub />,
+    description: <FiAlignJustify />,
+    timezone: <FiClock />,
     60: <FaEthereum />,
 };
 
@@ -25,7 +30,10 @@ const field_placeholders: Record<string, string> = {
     'org.telegram': 'lucemans',
     'com.discord': 'lucemans',
     name: 'Luc',
+    description: 'this is my description',
     url: 'https://example.com',
+    pronouns: 'they/them',
+    timezone: 'Europe/Amsterdam',
 };
 
 export const Field: FC<{
