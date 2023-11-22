@@ -177,15 +177,18 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 
     if (!data) return <div>Loading...</div>;
 
+    const name_split = name.split('.');
+    const first_half = name_split.length > 2 ? name_split[0] : name;
+    const second_half =
+        name_split.length > 2 ? name_split.slice(1).join('.') : undefined;
+
     return (
         <Layout>
             <div className="px-4">
-                <span className="block font-bold text-3xl">
-                    {name.split('.')[0]}
-                </span>
-                <span className="block text-xl">
-                    .{name.split('.').slice(1).join('.')}
-                </span>
+                <span className="block font-bold text-3xl">{first_half}</span>
+                {second_half && (
+                    <span className="block text-xl">.{second_half}</span>
+                )}
             </div>
             <div className="relative flex flex-col items-center card">
                 <div className="w-full">
