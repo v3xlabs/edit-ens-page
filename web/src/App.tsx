@@ -6,6 +6,7 @@ import { Field } from './field/Field';
 import { UserProfile } from './UserProfile';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
+export const ENSTATE_URL = 'https://worker.enstate.rs/n/';
 
 type ProfileResponse = {
     name: string;
@@ -13,12 +14,44 @@ type ProfileResponse = {
     addresses: Record<string, string>;
 };
 
+type EnstateResponse = {
+    name: string;
+    avatar: string;
+    records: Record<string, string>;
+    chains: Record<string, string>;
+};
+
+const getEnstate = async (name: string) => {
+    try {
+        const request = await fetch(ENSTATE_URL + name);
+
+        const data: EnstateResponse = await request.json();
+
+        return data;
+    } catch {
+        console.log('Failed to load from ccip gateway');
+    }
+};
+
 export const getProfile = async (name: string) => {
-    const request = await fetch(GATEWAY_VIEW + name);
+    try {
+        const request = await fetch(GATEWAY_VIEW + name);
 
-    const data: ProfileResponse = await request.json();
+        const data: ProfileResponse = await request.json();
 
-    return data;
+        return data;
+    } catch {
+        console.log('Failed to load from ccip gateway');
+    }
+
+    const data = await getEnstate(name);
+
+    if (!data) return;
+
+    data.records['avatar'] = data.avatar;
+    data.chains['60'] = data.chains['eth'];
+
+    return { ...data, records: data.records, addresses: data.chains };
 };
 
 export const App = () => {
