@@ -1,4 +1,4 @@
-export const GATEWAY_VIEW = "https://rs.myeth.id/view/";
+export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 
 type ProfileResponse = {
     name: string;
@@ -12,8 +12,10 @@ export const getProfile = async (name: string) => {
     const data: ProfileResponse = await request.json();
 
     return data;
-}
+};
 
-const profile = await getProfile("luc.willbreak.eth");
+(async () => {
+    const profile = await getProfile('luc.willbreak.eth');
 
-console.log(profile);
+    console.log(profile);
+})();
