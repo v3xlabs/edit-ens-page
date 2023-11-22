@@ -19,6 +19,18 @@
     @apply border border-ens-light-border dark:border-ens-dark-border;
 }
 
+.btn.btn-disabled {
+    @apply bg-ens-light-background-disabled dark:bg-ens-dark-background-disabled text-ens-light-text-disabled dark:text-ens-dark-text-disabled;
+}
+
 .btn.btn-full {
     @apply w-full;
+}
+
+.card {
+    @apply bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border border rounded-2xl;
+}
+
+.input {
+    @apply border bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border pl-9 rounded-md py-2 w-full;
 }

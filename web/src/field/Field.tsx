@@ -42,7 +42,7 @@ export const Field: FC<{
                     {field_icon}
                 </div>
                 <input
-                    className="border bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border pl-9 rounded-md py-2 w-full"
+                    className="input"
                     placeholder={field_placeholder}
                     value={value}
                     readOnly={!editable}

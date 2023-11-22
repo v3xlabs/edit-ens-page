@@ -3,8 +3,9 @@ import { FiAlertTriangle, FiLoader } from 'react-icons/fi';
 import { namehash } from 'viem';
 import { useContractWrite, usePrepareContractWrite } from 'wagmi';
 
-import { DEVELOPER_MODE, ENS_MAINNET_REGISTRY } from '../App';
+import { DEVELOPER_MODE } from '../App';
 import { Dialog } from '../dialog/Dialog';
+import { ENS_MAINNET_REGISTRY } from '../Profile';
 import { TransactionReceiptModal } from '../transaction/TransactionReceiptModal';
 
 export const SetResolverModal: FC<{
