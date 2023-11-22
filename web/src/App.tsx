@@ -129,7 +129,7 @@ export const App = () => {
                 {editable && (
                     <div className="fixed md:relative bottom-0 inset-x-0 w-full">
                         <div className="relative w-full flex justify-center p-3 md:p-0">
-                            <button className="z-10 w-full rounded-4xl p-2 max-w-2xs md:max-w-full mx-auto bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
+                            <button className="z-10 h-12 w-full rounded-4xl p-2 max-w-2xs md:max-w-full mx-auto bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
                                 Update profile
                             </button>
                             <div className="md:hidden bg-gradient-to-t from-black/20 to-black/0 absolute inset-0"></div>
