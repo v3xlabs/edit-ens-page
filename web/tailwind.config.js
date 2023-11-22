@@ -5,6 +5,12 @@ module.exports = {
     content: ['./index.html', 'src/**/*.tsx', 'src/*.tsx'],
     theme: {
         extend: {
+            maxWidth: {
+                '2xs': '18rem',
+            },
+            borderRadius: {
+                '4xl': '2rem',
+            },
             colors: {
                 ens: {
                     light: {
