@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 
+import { UserProfile } from './UserProfile.tsx';
 import { Field } from './field/Field';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
@@ -36,9 +37,7 @@ export const App = () => {
             <div className="flex justify-between items-center">
                 <div>ENS</div>
                 <div>
-                    <button className="text-ens-light-text-accent dark:text-ens-dark-text-accent bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary rounded-3xl px-6 py-2">
-                        Connect
-                    </button>
+                    <UserProfile />
                 </div>
             </div>
             <div className="px-4">
