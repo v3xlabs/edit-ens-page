@@ -57,7 +57,14 @@ export const App = () => {
                                     background:
                                         'linear-gradient(323deg, #DE82FF -15.56%, #7F6AFF 108.43%)',
                                 }}
-                            ></div>
+                            >
+                                {data.records['avatar'] && (
+                                    <img
+                                        src={data.records['avatar']}
+                                        className="w-full h-full"
+                                    />
+                                )}
+                            </div>
                         </div>
                         <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
                             E
