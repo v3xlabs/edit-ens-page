@@ -1,9 +1,11 @@
-import { FC } from 'react';
-import { FiAlertTriangle, FiLoader, FiX } from 'react-icons/fi';
+import { FC, useState } from 'react';
+import { FiAlertTriangle, FiLoader } from 'react-icons/fi';
 import { namehash } from 'viem';
 import { useContractWrite, usePrepareContractWrite } from 'wagmi';
 
-import { ENS_MAINNET_REGISTRY } from '../App';
+import { DEVELOPER_MODE, ENS_MAINNET_REGISTRY } from '../App';
+import { Dialog } from '../dialog/Dialog';
+import { TransactionReceiptModal } from '../transaction/TransactionReceiptModal';
 
 export const SetResolverModal: FC<{
     resolver: string;
@@ -34,20 +36,17 @@ export const SetResolverModal: FC<{
         args: [namehash(name), resolver],
     });
     const { write, data: receipt, isLoading } = useContractWrite(config);
+    const [testReceiptOpen, setTestReceiptOpen] = useState(false);
+
+    const onClosez = () => {
+        setTestReceiptOpen(false);
+        onClose();
+    };
 
     return (
-        <div>
-            <div className="fixed z-10 inset-0 bg-white/10 backdrop-blur-md"></div>
-            <div className="fixed z-20 inset-x-0 bottom-0 md:inset-0 flex items-center justify-center">
-                <div className="relative bg-ens-light-background-primary dark:bg-ens-dark-background-primary p-4 rounded-t-xl md:rounded-b-xl shadow-xl max-w-md border border-ens-light-border dark:border-ens-dark-border">
-                    <button
-                        onClick={() => {
-                            onClose();
-                        }}
-                        className="absolute top-4 right-4"
-                    >
-                        <FiX />
-                    </button>
+        <>
+            {!receipt && !testReceiptOpen && (
+                <Dialog onClose={onClosez}>
                     <div className="p-4 space-y-2">
                         <div className="w-8 h-8 p-2 rounded-full bg-ens-light-yellow-primary dark:bg-ens-dark-yellow-primary mx-auto flex items-center justify-center">
                             <FiAlertTriangle stroke="#fff" />
@@ -66,9 +65,7 @@ export const SetResolverModal: FC<{
                     </div>
                     <div className="gap-2 flex flex-col">
                         <button
-                            onClick={() => {
-                                onClose();
-                            }}
+                            onClick={onClosez}
                             className="w-full p-4 rounded-xl bg-ens-light-blue-surface text-ens-light-blue-dim dark:bg-ens-dark-blue-surface dark:text-ens-dark-blue-dim"
                         >
                             Back
@@ -86,9 +83,33 @@ export const SetResolverModal: FC<{
                                 </div>
                             )}
                         </button>
+                        {DEVELOPER_MODE && (
+                            <>
+                                <button
+                                    onClick={() => {
+                                        setTestReceiptOpen(true);
+                                    }}
+                                    className="relative flex items-center justify-center w-full p-4 rounded-xl bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
+                                >
+                                    Test Transaction Receipt
+                                </button>
+                            </>
+                        )}
                     </div>
-                </div>
-            </div>
-        </div>
+                </Dialog>
+            )}
+            {testReceiptOpen && (
+                <TransactionReceiptModal
+                    hash="0x4a7f7ec3f38d09fc7ffcf6acaf5231bf554de2ccbe37ab476b2523246f7e2bea"
+                    onClose={onClosez}
+                />
+            )}
+            {receipt && (
+                <TransactionReceiptModal
+                    hash={receipt.hash}
+                    onClose={onClosez}
+                />
+            )}
+        </>
     );
 };

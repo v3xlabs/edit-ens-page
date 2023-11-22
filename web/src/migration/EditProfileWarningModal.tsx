@@ -35,11 +35,11 @@ export const EditProfileWarningModal: FC<{
                             onClick={() => {
                                 onClose();
                             }}
-                            className="w-full p-4 rounded-xl bg-ens-light-blue-surface text-ens-light-blue-dim dark:bg-ens-dark-blue-surface dark:text-ens-dark-blue-dim"
+                            className="btn btn-secondary btn-full"
                         >
                             Back
                         </button>
-                        <button className="w-full p-4 rounded-xl bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
+                        <button className="btn btn-primary btn-full">
                             Update Resolver
                         </button>
                     </div>

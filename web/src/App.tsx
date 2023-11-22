@@ -80,7 +80,7 @@ const postUpdateProfile = async (name: string, data: ProfileDataPost) => {
     console.log({ response });
 };
 
-const DEVELOPER_MODE = true;
+export const DEVELOPER_MODE = true;
 
 export const App = () => {
     // eslint-disable-next-line no-undef
