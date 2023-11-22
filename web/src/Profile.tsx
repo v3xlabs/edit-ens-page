@@ -183,30 +183,19 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                     .{name.split('.').slice(1).join('.')}
                 </span>
             </div>
-            <div className="relative flex flex-col items-center gap-4 p-4 card">
-                <div className="w-full flex items-center justify-center">
-                    <div className="relative aspect-square h-40 w-40">
-                        <div className="aspect-square h-40 overflow-hidden w-40 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
-                            <div
-                                className="w-full h-full"
-                                style={{
-                                    background:
-                                        'linear-gradient(323deg, #DE82FF -15.56%, #7F6AFF 108.43%)',
-                                }}
-                            >
-                                {data.records['avatar'] && (
-                                    <img
-                                        src={
-                                            'https://enstate.rs/i/' + data.name
-                                        }
-                                        alt="avatar"
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </div>
-                        </div>
+            <div className="relative flex flex-col items-center card">
+                <div className="w-full">
+                    <div className="relative w-full aspect-[3/1] overflow-hidden rounded-t-2xl">
+                        <div className="absolute inset-0 w-full h-full bg-ens-light-background-secondary"></div>
+                        {data.records['header'] && (
+                            <img
+                                src={'https://enstate.rs/h/' + data.name}
+                                alt="banner"
+                                className="w-full h-full object-cover absolute inset-0"
+                            />
+                        )}
                         {editable && (
-                            <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                            <div className="right-1 bottom-1 absolute w-8 h-8 rounded-lg bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
                                 <img
                                     src="/pencil.svg"
                                     alt="pencil"
@@ -215,89 +204,130 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             </div>
                         )}
                     </div>
-                </div>
-                <div className="w-full flex flex-col gap-2">
-                    <Field
-                        label="Display Name"
-                        record="name"
-                        value={data.records['name']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Website"
-                        record="url"
-                        value={data.records['url']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="X"
-                        record="com.twitter"
-                        value={data.records['com.twitter']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Telegram"
-                        record="org.telegram"
-                        value={data.records['org.telegram']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Discord"
-                        record="com.discord"
-                        value={data.records['com.discord']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Github"
-                        record="com.github"
-                        value={data.records['com.github']}
-                        editable={editable}
-                    />
-                    <Field
-                        label="Ethereum Address"
-                        record="60"
-                        value={data.addresses['60']}
-                        editable={editable}
-                    />
-                    {DEVELOPER_MODE && (
-                        <Field
-                            label="Resolver"
-                            record="resolver"
-                            editable={false}
-                            value={ensResolver ?? '...'}
-                        />
-                    )}
-                    {DEVELOPER_MODE && ownerData && (
-                        <Field
-                            label="Owner"
-                            record="owner"
-                            editable={false}
-                            value={ownerData.toString()}
-                        />
-                    )}
-                </div>
-                {editable && (
-                    <FloatingButton>
-                        <button
-                            className={clsx(
-                                'btn btn-pad btn-full',
-                                hasChanges ? 'btn-primary' : 'btn-disabled'
+                    <div className="flex items-center justify-center -mt-20">
+                        <div className="relative aspect-square h-32 w-32">
+                            <div className="aspect-square h-32 overflow-hidden w-32 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
+                                <div
+                                    className="w-full h-full"
+                                    style={{
+                                        background:
+                                            'linear-gradient(323deg, #DE82FF -15.56%, #7F6AFF 108.43%)',
+                                    }}
+                                >
+                                    {data.records['avatar'] && (
+                                        <img
+                                            src={
+                                                'https://enstate.rs/i/' +
+                                                data.name
+                                            }
+                                            alt="avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            {editable && (
+                                <div className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                                    <img
+                                        src="/pencil.svg"
+                                        alt="pencil"
+                                        className="h-[1em] fill-ens-light-text-accent"
+                                    />
+                                </div>
                             )}
-                            onClick={() => {
-                                mutateProfile();
-                                // hasChanges && mutateProfile();
-                            }}
-                            disabled={!hasChanges}
-                        >
-                            Update profile
-                        </button>
-                    </FloatingButton>
-                )}
-                {shouldSuggestGassless && (
-                    <FloatingButton>
-                        <GoGassless name={name} />
-                    </FloatingButton>
-                )}
+                        </div>
+                    </div>
+                </div>
+                <div className="p-4 w-full">
+                    <div className="w-full flex flex-col gap-2">
+                        <Field
+                            label="Display Name"
+                            record="name"
+                            value={data.records['name']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Website"
+                            record="url"
+                            value={data.records['url']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Description"
+                            record="description"
+                            value={data.records['description']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="X"
+                            record="com.twitter"
+                            value={data.records['com.twitter']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Telegram"
+                            record="org.telegram"
+                            value={data.records['org.telegram']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Discord"
+                            record="com.discord"
+                            value={data.records['com.discord']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Github"
+                            record="com.github"
+                            value={data.records['com.github']}
+                            editable={editable}
+                        />
+                        <Field
+                            label="Ethereum Address"
+                            record="60"
+                            value={data.addresses['60']}
+                            editable={editable}
+                        />
+                        {DEVELOPER_MODE && (
+                            <Field
+                                label="Resolver"
+                                record="resolver"
+                                editable={false}
+                                value={ensResolver ?? '...'}
+                            />
+                        )}
+                        {DEVELOPER_MODE && ownerData && (
+                            <Field
+                                label="Owner"
+                                record="owner"
+                                editable={false}
+                                value={ownerData.toString()}
+                            />
+                        )}
+                    </div>
+                    {editable && (
+                        <FloatingButton>
+                            <button
+                                className={clsx(
+                                    'btn btn-pad btn-full',
+                                    hasChanges ? 'btn-primary' : 'btn-disabled'
+                                )}
+                                onClick={() => {
+                                    mutateProfile();
+                                    // hasChanges && mutateProfile();
+                                }}
+                                disabled={!hasChanges}
+                            >
+                                Update profile
+                            </button>
+                        </FloatingButton>
+                    )}
+                    {shouldSuggestGassless && (
+                        <FloatingButton>
+                            <GoGassless name={name} />
+                        </FloatingButton>
+                    )}
+                </div>
             </div>
         </Layout>
     );
