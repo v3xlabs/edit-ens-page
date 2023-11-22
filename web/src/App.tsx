@@ -1,4 +1,5 @@
 import { MenuSVG } from '@ensdomains/thorin';
+import { FC, PropsWithChildren } from 'react';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import { useAccount, useContractRead, useEnsResolver } from 'wagmi';
@@ -80,7 +81,7 @@ const postUpdateProfile = async (name: string, data: ProfileDataPost) => {
     console.log({ response });
 };
 
-export const DEVELOPER_MODE = true;
+export const DEVELOPER_MODE = false;
 
 export const App = () => {
     // eslint-disable-next-line no-undef
@@ -93,7 +94,8 @@ export const App = () => {
     const { data } = useSWR(name, getProfile);
     const { address } = useAccount();
 
-    const { data: ensResolver } = useEnsResolver({ name });
+    const { data: ensResolver, isSuccess: isEnsResolverFinished } =
+        useEnsResolver({ name });
     const { data: ownerData } = useContractRead({
         address: ENS_MAINNET_REGISTRY,
         abi: [
@@ -128,7 +130,10 @@ export const App = () => {
     const editable = address && data && isUsingOffchainResolver && isOwner;
 
     const shouldSuggestGassless =
-        !isUsingOffchainResolver && isOwner && canChangeResolver;
+        isEnsResolverFinished &&
+        !isUsingOffchainResolver &&
+        isOwner &&
+        canChangeResolver;
 
     const mutateProfile = () => {
         postUpdateProfile(name, {
@@ -149,7 +154,7 @@ export const App = () => {
             <div className="flex justify-between items-center pb-2">
                 <div className="flex gap-4 items-center">
                     <img src="/mark.svg" alt="mark" className="h-12" />
-                    <button onClick={() => {}}>
+                    <button onClick={() => { }}>
                         <MenuSVG />
                     </button>
                 </div>
@@ -251,20 +256,32 @@ export const App = () => {
                     )}
                 </div>
                 {editable && (
-                    <div className="fixed md:relative bottom-0 inset-x-0 w-full">
-                        <div className="relative w-full flex justify-center p-3 md:p-0">
-                            <button
-                                className="z-10 h-12 w-full rounded-4xl p-2 max-w-2xs md:max-w-full mx-auto bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
-                                onClick={() => mutateProfile()}
-                            >
-                                Update profile
-                            </button>
-                            <div className="md:hidden bg-gradient-to-t from-black/20 to-black/0 absolute inset-0"></div>
-                        </div>
-                    </div>
+                    <FloatingButton>
+                        <button
+                            className="btn btn-primary btn-full"
+                            onClick={() => mutateProfile()}
+                        >
+                            Update profile
+                        </button>
+                    </FloatingButton>
                 )}
-                {shouldSuggestGassless && <GoGassless name={name} />}
+                {shouldSuggestGassless && (
+                    <FloatingButton>
+                        <GoGassless name={name} />
+                    </FloatingButton>
+                )}
             </div>
         </div>
     );
 };
+
+export const FloatingButton: FC<PropsWithChildren<{}>> = ({ children }) => (
+    <div className="fixed md:relative bottom-0 inset-x-0 w-full">
+        <div className="relative w-full flex justify-center p-3 md:p-0">
+            <div className="z-10 w-full max-w-2xs md:max-w-full mx-auto ">
+                {children}
+            </div>
+            <div className="md:hidden bg-gradient-to-t from-black/20 to-black/0 absolute inset-0"></div>
+        </div>
+    </div>
+);
