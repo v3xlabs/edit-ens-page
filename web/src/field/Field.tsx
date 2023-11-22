@@ -7,9 +7,7 @@ export const Field: FC<{ label: string; record: string; value: string }> = ({
 }) => {
     return (
         <div className="">
-            <label className="font-bold text-sm pl-2 py-1 block">
-                {label}
-            </label>
+            <label className="font-bold text-sm pl-2 py-1 block">{label}</label>
             <div className="relative">
                 <div className="absolute left-2 top-1/2 -translate-y-1/2">
                     P
