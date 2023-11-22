@@ -193,7 +193,7 @@ module.exports = {
                         background: {
                             primary: '#1E2122',
                             secondary: '#141416',
-                            disabled: '##424347',
+                            disabled: '#424347',
                         },
                         // Additional
                         border: '#42464E',
