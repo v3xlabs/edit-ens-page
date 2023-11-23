@@ -1,32 +1,8 @@
 import { BrowserSVG, PersonSVG } from '@ensdomains/thorin';
 import { ReactNode } from 'react';
 import { BsTwitterX } from 'react-icons/bs';
-import {
-    FaBitcoin,
-    FaDiscord,
-    FaDrawPolygon,
-    FaEthereum,
-    FaGithub,
-    FaScroll,
-    FaTelegramPlane,
-} from 'react-icons/fa';
-import { FiAlignJustify, FiClock, FiGlobe, FiMail, FiMapPin } from 'react-icons/fi';
-
-const field_record_to_icon: Record<string, ReactNode> = {
-    'com.twitter': <BsTwitterX />,
-    'org.telegram': <FaTelegramPlane />,
-    name: <PersonSVG />,
-    url: <BrowserSVG />,
-    'com.discord': <FaDiscord />,
-    'com.github': <FaGithub />,
-    description: <FiAlignJustify />,
-    timezone: <FiClock />,
-    '60': <FaEthereum />,
-    '2147483785': <FaDrawPolygon />, // Polygon
-    '2147483658': <FiGlobe />, // Optimism
-    '2148018000': <FaScroll />, // Scroll
-    '0': <FaBitcoin />,
-};
+import { FaDiscord, FaGithub, FaTelegramPlane } from 'react-icons/fa';
+import { FiAlignJustify, FiClock, FiMail, FiMapPin } from 'react-icons/fi';
 
 export type EnsRecordBase = {
     hidden?: boolean;
