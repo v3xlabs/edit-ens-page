@@ -6,7 +6,7 @@ export const DEVELOPER_MODE = false;
 export const App = () => {
     // eslint-disable-next-line no-undef
     const path = window.location.pathname;
-    const name = path.replace('/', '');
+    const name = path.replace('/', '').toLowerCase();
 
     if (name.length === 0) {
         return <Home />;
