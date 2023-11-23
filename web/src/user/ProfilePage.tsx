@@ -25,11 +25,20 @@ export const ProfilePage: FC<{ onClose: () => void }> = ({ onClose }) => {
 
     const { disconnect } = useDisconnect();
 
+    let timeout: any;
+
     return (
         <div className="z-50 absolute">
             <Dialog onClose={onClose} variant="top" closeVariant="center">
                 <div className="items-center flex-col w-full space-y-4">
-                    <button className=" flex flex-row items-center gap-x-2">
+                    <button
+                        title={'Click to copy ' + user.address}
+                        onClick={() => {
+                            // eslint-disable-next-line no-undef
+                            navigator.clipboard.writeText(user.address);
+                        }}
+                        className="justify-center w-full flex flex-row items-center gap-x-2 active:scale-90 transition-transform"
+                    >
                         {/* Copy symbol */}
                         <svg
                             width="17"
@@ -56,7 +65,7 @@ export const ProfilePage: FC<{ onClose: () => void }> = ({ onClose }) => {
                             disconnect();
                             onClose();
                         }}
-                        className="text-ens-light-red-primary dark:text-ens-light-red-primary flex flex-row items-center gap-x-2"
+                        className="justify-center w-full text-ens-light-red-primary dark:text-ens-light-red-primary flex flex-row items-center gap-x-2 scale-90 transition-transform"
                     >
                         {/* Disconnect symbol */}
                         <svg
