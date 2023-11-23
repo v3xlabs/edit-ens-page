@@ -10,7 +10,7 @@ import {
     FaScroll,
     FaTelegramPlane,
 } from 'react-icons/fa';
-import { FiAlignJustify, FiClock, FiGlobe } from 'react-icons/fi';
+import { FiAlignJustify, FiClock, FiGlobe, FiMail, FiMapPin } from 'react-icons/fi';
 
 const field_record_to_icon: Record<string, ReactNode> = {
     'com.twitter': <BsTwitterX />,
@@ -36,18 +36,20 @@ export type EnsRecordBase = {
           pattern?: string;
           label?: string;
           icon?: ReactNode;
+          placeholder?: string;
       }
     | {
           type: 'arbitrary';
           pattern?: undefined;
           label?: undefined;
           icon?: undefined;
+          placeholder?: undefined;
       }
 );
 
 export type EnsRecord = EnsRecordBase & {
     record: string;
-    value: string;
+    // value: string;
 };
 
 export const SupportedRecords: Record<string, EnsRecordBase> = {
@@ -78,12 +80,27 @@ export const SupportedRecords: Record<string, EnsRecordBase> = {
         label: 'Website',
         icon: <BrowserSVG />,
     },
+    email: {
+        type: 'recommended',
+        label: 'Email',
+        icon: <FiMail />,
+    },
+    timezone: {
+        type: 'recommended',
+        label: 'Timezone',
+        icon: <FiClock />,
+    },
+    location: {
+        type: 'recommended',
+        label: 'Location',
+        icon: <FiMapPin />,
+    },
     'com.twitter': {
         type: 'supported',
         label: 'X',
         icon: <BsTwitterX />,
     },
-    'com.telegram': {
+    'org.telegram': {
         type: 'supported',
         label: 'Telegram',
         icon: <FaTelegramPlane />,

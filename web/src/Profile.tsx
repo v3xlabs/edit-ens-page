@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
 import { FC, PropsWithChildren, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'wagmi';
 
 import { DEVELOPER_MODE } from './App';
-import { Field, FieldNew } from './field/Field';
+import { FieldNew } from './field/Field';
 import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
@@ -52,20 +52,46 @@ const getEnstate = async (name: string) => {
     }
 };
 
+// Character to replace period with to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form. should be a random unicode character that is not used in any record name
+const SPLITTER = '⁞';
+
+const replacePeriods = (record: string) => record.replace(/\./g, SPLITTER);
+const unReplacePeriods = (record: string) =>
+    record.replace(new RegExp(SPLITTER, 'g'), '.');
+
 export const getProfile = async (name: string) => {
     try {
         const request = await fetch(GATEWAY_VIEW + name);
 
-        const data: ProfileResponse = await request.json();
+        // const data: ProfileResponse = await request.json();
 
         return {
-            ...data,
-            display:
-                data.records['display'].toLowerCase() == name
-                    ? data.records['display']
-                    : undefined,
-            chains: data.addresses,
+            name: 'v3x.eth',
+            records: {
+                name: 'v3x.eth',
+                avatar: 'https://gateway.pinata.cloud/ipfs/QmVQaX2H1v6Qc723j7KQq6Q8Y8X4iCqYQ2V1xZJ6JkqL6Z',
+                url: 'https://v3x.eth.link',
+                'com.twitter': 'v3x.eth',
+                'org.telegram': 'v3x.eth',
+                'com.discord': 'v3x.eth',
+                'com.github': 'v3x.eth',
+            },
+            chains: {
+                '60': '0xd577D1322cB22eB6EAC1a008F62b18807921EFBc',
+            },
+        } as Omit<ProfileResponse, 'addresses'> & {
+            display?: string;
+            chains: Record<string, string>;
         };
+
+        // return {
+        //     ...data,
+        //     display:
+        //         data.records['display'].toLowerCase() == name
+        //             ? data.records['display']
+        //             : undefined,
+        //     chains: data.addresses,
+        // };
     } catch {
         console.log('Failed to load from ccip gateway');
     }
@@ -109,43 +135,192 @@ const postUpdateProfile = async (
     console.log({ response });
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-export const Profile: FC<{ name: string }> = ({ name }) => {
-    const { data } = useSWR(name, getProfile);
-    const { address } = useAccount();
+type ProfileForm = {
+    records: Record<string, string>;
+    chains: Record<string, string>;
+};
 
+const ProfileRecordsSection: FC<{
+    data: Omit<ProfileResponse, 'addresses'> & {
+        display?: string;
+        chains: Record<string, string>;
+    };
+    editable: boolean;
+    ownerData?: unknown;
+    ensResolver?: string;
+    shouldSuggestGassless?: boolean;
+    submitHandler: SubmitHandler<ProfileForm>;
+}> = ({
+    data,
+    editable,
+    ownerData,
+    ensResolver,
+    shouldSuggestGassless,
+    submitHandler,
+}) => {
     const [profileRecords, setProfileRecords] = useState<EnsRecord[]>([]);
 
     useEffect(() => {
-        if (!data) return;
+        if (profileRecords.length > 0) return;
 
         const records: EnsRecord[] = [];
 
-        Object.entries(data.records).map(([record, value]) => {
+        const convertRecord = (record: string) => {
             const supportedRecord = SupportedRecords[record];
 
             if (!supportedRecord) {
-                records.push({
+                return {
                     type: 'arbitrary',
                     hidden: false,
-                    value,
-                    record,
-                });
-
-                return;
+                    record: replacePeriods(record),
+                } as EnsRecord;
             }
 
-            records.push({
+            return {
                 ...supportedRecord,
-                value,
-                record,
-            });
-        });
+                record: replacePeriods(record),
+            };
+        };
 
-        console.log(records);
+        if (editable) {
+            records.push(
+                ...Object.entries(SupportedRecords)
+                    .filter(([_, record]) => record.type === 'recommended')
+                    .map(([record, supportedRecord]) => ({
+                        ...supportedRecord,
+                        record: replacePeriods(record),
+                    })),
+                ...Object.keys(data.records)
+                    .filter(
+                        (record) =>
+                            SupportedRecords[record]?.type !== 'recommended'
+                    )
+                    .map(convertRecord)
+            );
+        } else {
+            records.push(
+                ...Object.entries(data.records)
+                    // .filter(([_, value]) => value.length > 0)
+                    .map(([key]) => convertRecord(key))
+            );
+        }
 
         setProfileRecords(records);
-    }, [data]);
+    }, [data, editable]);
+
+    const {
+        register,
+        getValues,
+        handleSubmit,
+        formState: { isDirty, defaultValues, dirtyFields },
+    } = useForm<ProfileForm>({
+        defaultValues: {
+            records: {
+                ...Object.fromEntries(
+                    Object.entries(data.records).map(([key, value]) => [
+                        key.replace(/\./g, SPLITTER),
+                        value,
+                    ])
+                ),
+                ...(DEVELOPER_MODE
+                    ? ({
+                          resolver: ensResolver,
+                          owner: ownerData,
+                      } as Record<string, string>)
+                    : {}),
+            },
+            chains: data.chains,
+        },
+    });
+
+    console.log(getValues(), data, defaultValues, profileRecords);
+
+    return (
+        <form
+            className="p-4 w-full space-y-4"
+            onSubmit={handleSubmit(submitHandler)}
+        >
+            <div className="w-full flex flex-col gap-2">
+                {profileRecords.map((record) => (
+                    <FieldNew
+                        key={record.record}
+                        record={record.record}
+                        label={record.label ?? record.record}
+                        icon={record.icon}
+                        placeholder={record.placeholder}
+                        hidden={record.hidden}
+                        editable={editable}
+                        register={register(
+                            // replace all periods with splitter to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form
+                            `records.${record.record.replace(/\./g, SPLITTER)}`
+                        )}
+                        modified={
+                            dirtyFields.records &&
+                            `${record.record.replace(/\./g, SPLITTER)}` in
+                                dirtyFields.records
+                        }
+                    />
+                ))}
+                {
+                    // Chains
+                    [
+                        ['60', 'eth', 'Ethereum Address'],
+                        ['0', 'btc', 'Bitcoin Address'],
+                        ['2147483785', 'polygon', 'Polygon Address'],
+                        ['2147483658', 'optimism', 'Optimism Address'],
+                        ['2148018000', 'scroll', 'Scroll Address'],
+                    ].map(([chainId, chainName, chainLabel]) => (
+                        <FieldNew
+                            key={chainId}
+                            label={chainLabel}
+                            record={chainId.toString()}
+                            register={register(`chains.${chainId.toString()}`)}
+                            editable={editable}
+                        />
+                    ))
+                }
+                {DEVELOPER_MODE && (
+                    <FieldNew
+                        label="Resolver"
+                        record="resolver"
+                        editable={false}
+                        register={register('records.resolver')}
+                    />
+                )}
+                {DEVELOPER_MODE && ownerData && (
+                    <FieldNew
+                        label="Owner"
+                        record="owner"
+                        register={register('records.owner')}
+                        editable={false}
+                    />
+                )}
+            </div>
+            {editable && (
+                <FloatingButton>
+                    <button
+                        className={clsx(
+                            'btn btn-pad btn-full',
+                            isDirty ? 'btn-primary' : 'btn-disabled'
+                        )}
+                        disabled={!isDirty}
+                    >
+                        Update profile
+                    </button>
+                </FloatingButton>
+            )}
+            {shouldSuggestGassless && (
+                <FloatingButton>
+                    <GoGassless name={data.name} />
+                </FloatingButton>
+            )}
+        </form>
+    );
+};
+
+export const Profile: FC<{ name: string }> = ({ name }) => {
+    const { data } = useSWR(name, getProfile);
+    const { address } = useAccount();
 
     const { data: ensResolver, isSuccess: isEnsResolverFinished } =
         useEnsResolver({ name });
@@ -188,47 +363,32 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         isOwner &&
         canChangeResolver;
 
-    const newPayload = {
-        records: {
-            name: 'v3x.eth',
-            avatar: 'https://gateway.pinata.cloud/ipfs/QmVQaX2H1v6Qc7z3j7KQq6Q8Y8X4iCqYQ2V1xZJ6JkqL6Z',
-            url: 'https://v3x.eth.link',
-            'com.twitter': 'v3x.eth',
-            'org.telegram': 'v3x.eth',
-            'com.discord': 'v3x.eth',
-            'com.github': 'v3x.eth',
-        },
-        addresses: {
-            '60': '0x225f137127d9067788314bc7fcc1f36746a3c3B5',
-        },
-    };
+    const { signMessageAsync } = useSignMessage();
 
-    const payload = {
-        name,
-        records: newPayload.records,
-        addresses: newPayload.addresses,
-        time: Date.now(),
-    };
-    const message = JSON.stringify(payload);
+    const mutateProfile: SubmitHandler<ProfileForm> = async (data) => {
+        const payload = {
+            name,
+            records: Object.fromEntries(
+                Object.entries(data.records).map(([key, value]) => [
+                    unReplacePeriods(key),
+                    value,
+                ])
+            ),
+            addresses: data.chains,
+            time: Date.now(),
+        };
 
-    const { signMessageAsync } = useSignMessage({
-        message,
-    });
+        const message = JSON.stringify(payload);
 
-    const mutateProfile = async () => {
         console.log('signing message');
         // @ts-ignore
-        const x = await signMessageAsync();
+        const x = await signMessageAsync({ message });
 
         console.log('sending message');
         await postUpdateProfile(name, message, x);
     };
 
     const [startAvatarFlow, setStartAvatarFlow] = useState(false);
-
-    const hasChanges = true;
-
-    const { register } = useForm();
 
     if (!data) return <div>Loading...</div>;
 
@@ -314,135 +474,15 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                         </div>
                     </div>
                 </div>
-                <form className="p-4 w-full space-y-4">
-                    <div className="w-full flex flex-col gap-2">
-                        {editable ? (
-                            <h1>Yeet</h1>
-                        ) : (
-                            profileRecords.map((record) => (
-                                <FieldNew
-                                    key={record.record}
-                                    record={record}
-                                    editable={editable}
-                                    register={register(record.record)}
-                                />
-                            ))
-                        )}
-                        {/* <Field
-                            label="Display Name"
-                            record="name"
-                            value={data.records['name']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Pronouns"
-                            record="pronouns"
-                            value={data.records['pronouns']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Description"
-                            record="description"
-                            value={data.records['description']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Website"
-                            record="url"
-                            value={data.records['url']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="X"
-                            record="com.twitter"
-                            value={data.records['com.twitter']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Telegram"
-                            record="org.telegram"
-                            value={data.records['org.telegram']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Timezone"
-                            record="timezone"
-                            value={data.records['timezone']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Discord"
-                            record="com.discord"
-                            value={data.records['com.discord']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Github"
-                            record="com.github"
-                            value={data.records['com.github']}
-                            editable={editable}
-                        /> */}
-                        {
-                            // Chains
-                            [
-                                ['60', 'eth', 'Ethereum Address'],
-                                ['0', 'btc', 'Bitcoin Address'],
-                                ['2147483785', 'polygon', 'Polygon Address'],
-                                ['2147483658', 'optimism', 'Optimism Address'],
-                                ['2148018000', 'scroll', 'Scroll Address'],
-                            ].map(([chainId, chainName, chainLabel]) => (
-                                <Field
-                                    key={chainId}
-                                    label={chainLabel}
-                                    record={chainId.toString()}
-                                    value={
-                                        data?.chains[chainId.toString()] ??
-                                        data?.chains[chainName]
-                                    }
-                                    editable={editable}
-                                />
-                            ))
-                        }
-                        {DEVELOPER_MODE && (
-                            <Field
-                                label="Resolver"
-                                record="resolver"
-                                editable={false}
-                                value={ensResolver ?? '...'}
-                            />
-                        )}
-                        {DEVELOPER_MODE && ownerData && (
-                            <Field
-                                label="Owner"
-                                record="owner"
-                                editable={false}
-                                value={ownerData.toString()}
-                            />
-                        )}
-                    </div>
-                    {editable && (
-                        <FloatingButton>
-                            <button
-                                className={clsx(
-                                    'btn btn-pad btn-full',
-                                    hasChanges ? 'btn-primary' : 'btn-disabled'
-                                )}
-                                onClick={() => {
-                                    mutateProfile();
-                                    // hasChanges && mutateProfile();
-                                }}
-                                disabled={!hasChanges}
-                            >
-                                Update profile
-                            </button>
-                        </FloatingButton>
-                    )}
-                    {shouldSuggestGassless && (
-                        <FloatingButton>
-                            <GoGassless name={name} />
-                        </FloatingButton>
-                    )}
-                </form>
+                {/* record inputs */}
+                <ProfileRecordsSection
+                    data={data}
+                    editable={editable ?? false}
+                    ownerData={ownerData}
+                    ensResolver={ensResolver}
+                    shouldSuggestGassless={shouldSuggestGassless}
+                    submitHandler={mutateProfile}
+                />
             </div>
             <Footer />
         </Layout>

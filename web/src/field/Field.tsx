@@ -13,8 +13,6 @@ import {
 } from 'react-icons/fa';
 import { FiAlignJustify, FiClock, FiGlobe } from 'react-icons/fi';
 
-import { EnsRecord } from '../records.js';
-
 const field_record_to_icon: Record<string, ReactNode> = {
     'com.twitter': <BsTwitterX />,
     'org.telegram': <FaTelegramPlane />,
@@ -78,29 +76,40 @@ export const Field: FC<{
 
 // Temp Comp for new field
 export const FieldNew: FC<{
-    record: EnsRecord;
+    label: string;
+    record: string;
     editable: boolean;
-    register?: UseFormRegisterReturn<string>;
-}> = ({ record, editable, register }) => {
-    const field_placeholder = field_placeholders[record.record];
-
-    // hide empty fields
-    if ((!editable && !record.value) || record.hidden) return;
+    register: UseFormRegisterReturn<string>;
+    icon?: ReactNode;
+    placeholder?: string;
+    hidden?: boolean;
+    modified?: boolean;
+}> = ({ label, editable, register, icon, placeholder, hidden, modified }) => {
+    if (hidden)
+        return (
+            <input
+                className="input"
+                placeholder={placeholder}
+                readOnly={!editable}
+                hidden={hidden}
+                {...register}
+            />
+        );
 
     return (
         <div className="">
-            <label className="font-bold text-sm pl-2 py-1 block">
-                {record.label ? record.label : record.record}
-            </label>
+            <label className="font-bold text-sm pl-2 py-1 block">{label}</label>
             <div className="relative">
-                <div className="w-4 flex items-center justify-center left-3 top-1/2 absolute -translate-y-1/2">
-                    {record.icon}
-                </div>
+                {icon && (
+                    <div className="w-4 flex items-center justify-center left-3 top-1/2 absolute -translate-y-1/2">
+                        {icon}
+                    </div>
+                )}
                 <input
-                    className="input"
-                    placeholder={field_placeholder}
-                    value={record.value}
+                    className={`input ${modified ? '!border-red-500' : ''} `}
+                    placeholder={placeholder}
                     readOnly={!editable}
+                    hidden={hidden}
                     {...register}
                 />
             </div>
