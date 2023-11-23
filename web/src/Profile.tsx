@@ -31,7 +31,9 @@ type ProfileResponse = {
 
 type EnstateResponse = {
     name: string;
+    display: string;
     avatar: string;
+    header: string;
     records: Record<string, string>;
     chains: Record<string, string>;
 };
@@ -54,7 +56,14 @@ export const getProfile = async (name: string) => {
 
         const data: ProfileResponse = await request.json();
 
-        return data;
+        return {
+            ...data,
+            display:
+                data.records['display'].toLowerCase() == name
+                    ? data.records['display']
+                    : undefined,
+            chains: data.addresses,
+        };
     } catch {
         console.log('Failed to load from ccip gateway');
     }
@@ -63,10 +72,18 @@ export const getProfile = async (name: string) => {
 
     if (!data) return;
 
+    data.records['header'] = data.header;
     data.records['avatar'] = data.avatar;
     data.chains['60'] = data.chains['eth'];
 
-    return { ...data, records: data.records, addresses: data.chains };
+    return data;
+
+    // return {
+    //     ...data,
+    //     display: data.display,
+    //     records: data.records,
+    //     addresses: data.chains,
+    // };
 };
 
 const postUpdateProfile = async (
@@ -126,7 +143,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         '0xdCcB68ac05BB2Ee83F0873DCd0BF5F57E2968344'.toLowerCase();
     const canChangeResolver =
         ownerData?.toString().toLowerCase() === address?.toLowerCase();
-    const isOwner = data?.addresses[60] == address;
+    const isOwner = data?.chains[60] == address;
     const editable = address && data && isUsingOffchainResolver && isOwner;
 
     const shouldSuggestGassless =
@@ -177,8 +194,9 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 
     if (!data) return <div>Loading...</div>;
 
-    const name_split = name.split('.');
-    const first_half = name_split.length > 2 ? name_split[0] : name;
+    const display_name = data?.display ?? data?.name;
+    const name_split = display_name.split('.');
+    const first_half = name_split.length > 2 ? name_split[0] : display_name;
     const second_half =
         name_split.length > 2 ? name_split.slice(1).join('.') : undefined;
 
@@ -194,7 +212,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                 <div className="w-full">
                     <div className="relative w-full aspect-[3/1] overflow-hidden rounded-t-2xl">
                         <div className="absolute inset-0 w-full h-full bg-ens-light-background-secondary"></div>
-                        {data.records['header'] && (
+                        {data?.records['header'] && (
                             <img
                                 src={'https://enstate.rs/h/' + data.name}
                                 alt="banner"
@@ -328,8 +346,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                     label={chainLabel}
                                     record={chainId.toString()}
                                     value={
-                                        data.addresses[chainId.toString()] ??
-                                        data.addresses[chainName]
+                                        data?.chains[chainId.toString()] ??
+                                        data?.chains[chainName]
                                     }
                                     editable={editable}
                                 />
