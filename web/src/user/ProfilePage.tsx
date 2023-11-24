@@ -25,10 +25,8 @@ export const ProfilePage: FC<{ onClose: () => void }> = ({ onClose }) => {
 
     const { disconnect } = useDisconnect();
 
-    let timeout: any;
-
     return (
-        <div className="z-50 absolute">
+        <div className="z-50 absolute animate-from-top">
             <Dialog onClose={onClose} variant="top" closeVariant="center">
                 <div className="items-center flex-col w-full space-y-4">
                     <button
