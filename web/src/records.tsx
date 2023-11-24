@@ -1,8 +1,8 @@
 import { BrowserSVG, PersonSVG } from '@ensdomains/thorin';
 import { ReactNode } from 'react';
 import { BsTwitterX } from 'react-icons/bs';
-import { FaDiscord, FaGithub, FaTelegramPlane } from 'react-icons/fa';
-import { FiAlignJustify, FiClock, FiMail, FiMapPin } from 'react-icons/fi';
+import { FaBitcoin, FaDiscord, FaDrawPolygon, FaEthereum, FaGithub, FaScroll, FaTelegramPlane } from 'react-icons/fa';
+import { FiAlignJustify, FiClock, FiGlobe, FiMail, FiMapPin } from 'react-icons/fi';
 
 export type EnsRecordBase = {
     hidden?: boolean;
@@ -23,10 +23,7 @@ export type EnsRecordBase = {
       }
 );
 
-export type EnsRecord = EnsRecordBase & {
-    record: string;
-    // value: string;
-};
+export type EnsRecords = Record<string, EnsRecordBase>;
 
 export const SupportedRecords: Record<string, EnsRecordBase> = {
     name: {
@@ -43,6 +40,7 @@ export const SupportedRecords: Record<string, EnsRecordBase> = {
     pronouns: {
         type: 'recommended',
         label: 'Pronouns',
+        placeholder: 'they/them',
         icon: <FiAlignJustify />,
     },
     description: {
@@ -90,5 +88,35 @@ export const SupportedRecords: Record<string, EnsRecordBase> = {
         type: 'supported',
         label: 'Github',
         icon: <FaGithub />,
+    },
+};
+
+export type Chain = {
+    label: string;
+    icon?: ReactNode;
+};
+
+export type Chains = Record<string, Chain>;
+
+export const SupportedChains: Chains = {
+    '60': {
+        label: 'Ethereum',
+        icon: <FaEthereum />,
+    },
+    '0': {
+        label: 'Bitcoin',
+        icon: <FaBitcoin />,
+    },
+    '2147483785': {
+        label: 'Polygon',
+        icon: <FaDrawPolygon />,
+    },
+    '2147483658': {
+        label: 'Optimism',
+        icon: <FiGlobe />,
+    },
+    '2148018000': {
+        label: 'Scroll',
+        icon: <FaScroll />,
     },
 };

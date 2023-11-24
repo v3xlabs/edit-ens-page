@@ -17,7 +17,7 @@ import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
-import { EnsRecord, SupportedRecords } from './records';
+import { Chains, EnsRecords, SupportedRecords } from './records';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
@@ -75,6 +75,7 @@ export const getProfile = async (name: string) => {
                 'org.telegram': 'v3x.eth',
                 'com.discord': 'v3x.eth',
                 'com.github': 'v3x.eth',
+                yeet: 'yeet',
             },
             chains: {
                 '60': '0xd577D1322cB22eB6EAC1a008F62b18807921EFBc',
@@ -158,58 +159,58 @@ const ProfileRecordsSection: FC<{
     shouldSuggestGassless,
     submitHandler,
 }) => {
-    const [profileRecords, setProfileRecords] = useState<EnsRecord[]>([]);
+    const [profileRecords, setProfileRecords] = useState<
+        EnsRecords | undefined
+    >();
+    const [profileChains, setProfileChains] = useState<Chains | undefined>();
 
     useEffect(() => {
-        if (profileRecords.length > 0) return;
+        if (!profileRecords) {
+            const records: EnsRecords = {};
 
-        const records: EnsRecord[] = [];
+            if (editable) {
+                for (const [record, supportedRecord] of Object.entries(
+                    SupportedRecords
+                )) {
+                    if (supportedRecord.type === 'recommended') {
+                        records[replacePeriods(record)] = supportedRecord;
+                    }
+                }
 
-        const convertRecord = (record: string) => {
-            const supportedRecord = SupportedRecords[record];
+                for (const record of Object.keys(data.records)) {
+                    const supportedRecord = SupportedRecords[record];
 
-            if (!supportedRecord) {
-                return {
-                    type: 'arbitrary',
-                    hidden: false,
-                    record: replacePeriods(record),
-                } as EnsRecord;
+                    if (supportedRecord?.type === 'recommended') {
+                        continue;
+                    }
+
+                    if (supportedRecord?.type === 'supported') {
+                        records[replacePeriods(record)] = supportedRecord;
+                    } else {
+                        records[replacePeriods(record)] = {
+                            type: 'arbitrary',
+                            hidden: false,
+                        };
+                    }
+                }
+            } else {
+                for (const record of Object.keys(data.records)) {
+                    const supportedRecord = SupportedRecords[record];
+
+                    records[replacePeriods(record)] = supportedRecord ?? {
+                        type: 'arbitrary',
+                        hidden: false,
+                    };
+                }
             }
 
-            return {
-                ...supportedRecord,
-                record: replacePeriods(record),
-            };
-        };
-
-        if (editable) {
-            records.push(
-                ...Object.entries(SupportedRecords)
-                    .filter(([_, record]) => record.type === 'recommended')
-                    .map(([record, supportedRecord]) => ({
-                        ...supportedRecord,
-                        record: replacePeriods(record),
-                    })),
-                ...Object.keys(data.records)
-                    .filter(
-                        (record) =>
-                            SupportedRecords[record]?.type !== 'recommended'
-                    )
-                    .map(convertRecord)
-            );
-        } else {
-            records.push(
-                ...Object.entries(data.records)
-                    // .filter(([_, value]) => value.length > 0)
-                    .map(([key]) => convertRecord(key))
-            );
+            setProfileRecords(records);
         }
-
-        setProfileRecords(records);
     }, [data, editable]);
 
     const {
         register,
+        unregister,
         getValues,
         handleSubmit,
         formState: { isDirty, defaultValues, dirtyFields },
@@ -241,26 +242,45 @@ const ProfileRecordsSection: FC<{
             onSubmit={handleSubmit(submitHandler)}
         >
             <div className="w-full flex flex-col gap-2">
-                {profileRecords.map((record) => (
-                    <FieldNew
-                        key={record.record}
-                        record={record.record}
-                        label={record.label ?? record.record}
-                        icon={record.icon}
-                        placeholder={record.placeholder}
-                        hidden={record.hidden}
-                        editable={editable}
-                        register={register(
-                            // replace all periods with splitter to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form
-                            `records.${record.record.replace(/\./g, SPLITTER)}`
-                        )}
-                        modified={
-                            dirtyFields.records &&
-                            `${record.record.replace(/\./g, SPLITTER)}` in
-                                dirtyFields.records
-                        }
-                    />
-                ))}
+                {profileRecords &&
+                    Object.entries(profileRecords).map(([record, value]) => (
+                        <FieldNew
+                            key={record}
+                            record={record}
+                            label={value.label ?? record}
+                            icon={value.icon}
+                            placeholder={value.placeholder}
+                            hidden={value.hidden}
+                            editable={editable}
+                            defaultValue={
+                                defaultValues?.records &&
+                                defaultValues.records[record]
+                            }
+                            register={register(
+                                // replace all periods with splitter to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form
+                                `records.${replacePeriods(record)}`
+                            )}
+                            modified={
+                                dirtyFields.records &&
+                                replacePeriods(record) in dirtyFields.records
+                            }
+                            onDelete={() => {
+                                // remove record from profileRecords
+                                const newProfileRecords = {
+                                    ...profileRecords,
+                                };
+
+                                delete newProfileRecords[record];
+
+                                setProfileRecords(newProfileRecords);
+
+                                // remove record from form
+                                unregister(`records.${record}`, {
+                                    keepDirty: true,
+                                });
+                            }}
+                        />
+                    ))}
                 {
                     // Chains
                     [
@@ -390,7 +410,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 
     const [startAvatarFlow, setStartAvatarFlow] = useState(false);
 
-    if (!data) return <div>Loading...</div>;
+    if (!data || !ensResolver) return <div>Loading...</div>;
 
     const display_name = data?.display ?? data?.name;
     const name_split = display_name.split('.');
