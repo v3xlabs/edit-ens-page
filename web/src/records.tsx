@@ -1,8 +1,22 @@
 import { BrowserSVG, PersonSVG } from '@ensdomains/thorin';
 import { ReactNode } from 'react';
 import { BsTwitterX } from 'react-icons/bs';
-import { FaBitcoin, FaDiscord, FaDrawPolygon, FaEthereum, FaGithub, FaScroll, FaTelegramPlane } from 'react-icons/fa';
-import { FiAlignJustify, FiClock, FiGlobe, FiMail, FiMapPin } from 'react-icons/fi';
+import {
+    FaBitcoin,
+    FaDiscord,
+    FaDrawPolygon,
+    FaEthereum,
+    FaGithub,
+    FaScroll,
+    FaTelegramPlane,
+} from 'react-icons/fa';
+import {
+    FiAlignJustify,
+    FiClock,
+    FiGlobe,
+    FiMail,
+    FiMapPin,
+} from 'react-icons/fi';
 
 export type EnsRecordBase = {
     hidden?: boolean;
@@ -22,6 +36,13 @@ export type EnsRecordBase = {
           placeholder?: undefined;
       }
 );
+
+export type EnsRecord =
+    // EnsRecordBase &
+    {
+        record: string;
+        value: string;
+    };
 
 export type EnsRecords = Record<string, EnsRecordBase>;
 

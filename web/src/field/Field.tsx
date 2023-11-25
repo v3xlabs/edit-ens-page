@@ -75,9 +75,8 @@ export const Field: FC<{
 };
 
 // Temp Comp for new field
-export const FieldNew: FC<{
+export const SingleField: FC<{
     label: string;
-    record: string;
     editable: boolean;
     register: UseFormRegisterReturn<string>;
     icon?: ReactNode;
@@ -136,7 +135,74 @@ export const FieldNew: FC<{
                         <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
                     </div>
                 )}
-                {editable && onDelete && defaultValue && (
+                {editable && onDelete && defaultValue !== undefined && (
+                    <button
+                        className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
+                        onClick={onDelete}
+                    >
+                        <CrossCircleSVG className="mx-auto" />
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// Temp Comp for new field
+export const DoubleField: FC<{
+    label: string;
+    editable: boolean;
+    primaryRegister: UseFormRegisterReturn<string>;
+    secondaryRegister: UseFormRegisterReturn<string>;
+    icon?: ReactNode;
+    placeholder?: string;
+    modified?: boolean;
+    defaultValue?: string;
+    onDelete?: () => void;
+}> = ({
+    label,
+    editable,
+    primaryRegister,
+    secondaryRegister,
+    icon,
+    placeholder,
+    modified,
+    defaultValue,
+    onDelete,
+}) => {
+    return (
+        <div className="">
+            <label className={'font-bold text-sm pl-2 py-1 block'}>
+                {label}
+            </label>
+            <div className="relative flex space-x-5">
+                {icon && (
+                    <div
+                        className={
+                            'w-4 flex items-center justify-center left-3 top-1/2 absolute -translate-y-1/2'
+                        }
+                    >
+                        {icon}
+                    </div>
+                )}
+                <input
+                    className={'input !w-1/3'}
+                    placeholder={placeholder}
+                    readOnly={!editable}
+                    {...primaryRegister}
+                />
+                <input
+                    className={'input !w-2/3'}
+                    placeholder={placeholder}
+                    readOnly={!editable}
+                    {...secondaryRegister}
+                />
+                {modified && (
+                    <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2">
+                        <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
+                    </div>
+                )}
+                {editable && onDelete && defaultValue !== undefined && (
                     <button
                         className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
                         onClick={onDelete}

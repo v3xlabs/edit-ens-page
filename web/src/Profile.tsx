@@ -1,7 +1,12 @@
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
 import { FC, PropsWithChildren, useEffect, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import {
+    FieldArrayPath,
+    SubmitHandler,
+    useFieldArray,
+    useForm,
+} from 'react-hook-form';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -11,13 +16,18 @@ import {
     useSignMessage,
 } from 'wagmi';
 
-import { DEVELOPER_MODE } from './App';
-import { FieldNew } from './field/Field';
+import { DoubleField, SingleField } from './field/Field';
 import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
-import { EnsRecords, SupportedChains, SupportedRecords } from './records';
+import {
+    EnsRecord,
+    EnsRecordBase,
+    EnsRecords,
+    SupportedChains,
+    SupportedRecords,
+} from './records';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
@@ -137,34 +147,24 @@ const postUpdateProfile = async (
 };
 
 type ProfileForm = {
-    records: Record<string, string>;
-    chains: Record<string, string>;
+    // records: Record<string, { value: string }>;
+    // chains: Record<string, string>;
+    records: EnsRecord[];
 };
 
-const ProfileRecordsSection: FC<{
+type test = FieldArrayPath<ProfileForm>;
+
+const useRecords = (
     data: Omit<ProfileResponse, 'addresses'> & {
         display?: string;
         chains: Record<string, string>;
-    };
-    editable: boolean;
-    ownerData?: unknown;
-    ensResolver?: string;
-    shouldSuggestGassless?: boolean;
-    submitHandler: SubmitHandler<ProfileForm>;
-}> = ({
-    data,
-    editable,
-    ownerData,
-    ensResolver,
-    shouldSuggestGassless,
-    submitHandler,
-}) => {
-    const [profileRecords, setProfileRecords] = useState<
-        EnsRecords | undefined
-    >();
-    const [profileChains, setProfileChains] = useState<
-        EnsRecords | undefined
-    >();
+    },
+    editable: boolean
+) => {
+    const [profileRecords, setProfileRecords] = useState<EnsRecord[]>([]);
+    const [profileChains, setProfileChains] = useState<EnsRecords | undefined>(
+        []
+    );
 
     useEffect(() => {
         if (!profileRecords) {
@@ -253,34 +253,163 @@ const ProfileRecordsSection: FC<{
             setProfileChains(chains);
         }
     }, [data, editable]);
+};
 
+const useDefaultValues = (
+    data:
+        | (Omit<ProfileResponse, 'addresses'> & {
+              display?: string;
+              chains: Record<string, string>;
+          })
+        | undefined,
+    editable: boolean | undefined
+) => {
+    const [defaultValues, setDefaultValues] = useState<
+        ProfileForm | undefined
+    >();
+
+    useEffect(() => {
+        console.log('useDefaultValues', { data, editable, defaultValues });
+
+        if (!data || defaultValues || editable === undefined) return;
+
+        const newDefaultValues: ProfileForm = {
+            records: [],
+        };
+
+        if (editable) {
+            console.log('editable');
+
+            // Make sure all recommended records are in the form
+            for (const [record, supportedRecord] of Object.entries(
+                SupportedRecords
+            )) {
+                if (supportedRecord.type === 'recommended') {
+                    newDefaultValues.records.push({
+                        // ...supportedRecord,
+                        record,
+                        value: data.records[record] ?? '',
+                    });
+                }
+            }
+
+            // Add the rest of the records from the profile
+            for (const [record, value] of Object.entries(data.records)) {
+                const supportedRecord = SupportedRecords[record];
+
+                if (supportedRecord?.type === 'recommended') continue;
+
+                newDefaultValues.records.push({
+                    record,
+                    value,
+                });
+
+                // if (supportedRecord?.type === 'supported') {
+                //     defaultValues.records.push({
+                //         ...supportedRecord,
+                //         record,
+                //         value: data.records[record],
+                //     });
+                // } else {
+                //     defaultValues.records.push({
+                //         // type: 'arbitrary',
+                //         // hidden: false,
+                //         record,
+                //         value: data.records[record],
+                //     });
+                // }
+            }
+        } else {
+            for (const [record, value] of Object.entries(data.records)) {
+                newDefaultValues.records.push({
+                    record,
+                    value,
+                });
+                // const supportedRecord = SupportedRecords[record];
+
+                // if (supportedRecord) {
+                //     defaultValues.records.push({
+                //         ...supportedRecord,
+                //         record,
+                //         value: data.records[record],
+                //     });
+                // } else {
+                //     defaultValues.records.push({
+                //         type: 'arbitrary',
+                //         hidden: false,
+                //         record,
+                //         value: data.records[record],
+                //     });
+                // }
+            }
+        }
+
+        console.log({ defaultValues: newDefaultValues });
+
+        setDefaultValues(newDefaultValues);
+    }, [data, editable]);
+
+    return defaultValues;
+};
+
+const ProfileRecordsSection: FC<{
+    data: Omit<ProfileResponse, 'addresses'> & {
+        display?: string;
+        chains: Record<string, string>;
+    };
+    initialDefaultValues?: ProfileForm;
+    editable: boolean;
+    ownerData?: unknown;
+    ensResolver?: string;
+    shouldSuggestGassless?: boolean;
+    submitHandler: SubmitHandler<ProfileForm>;
+}> = ({
+    data,
+    initialDefaultValues,
+    editable,
+    ownerData,
+    ensResolver,
+    shouldSuggestGassless,
+    submitHandler,
+}) => {
     const {
         register,
+        control,
         unregister,
         getValues,
         handleSubmit,
         formState: { isDirty, defaultValues, dirtyFields },
-    } = useForm<ProfileForm>({
-        defaultValues: {
-            records: {
-                ...Object.fromEntries(
-                    Object.entries(data.records).map(([key, value]) => [
-                        key.replace(/\./g, SPLITTER),
-                        value,
-                    ])
-                ),
-                ...(DEVELOPER_MODE
-                    ? ({
-                          resolver: ensResolver,
-                          owner: ownerData,
-                      } as Record<string, string>)
-                    : {}),
-            },
-            chains: data.chains,
-        },
+    } = useForm({
+        // defaultValues: {
+        //     records: {
+        //         ...Object.fromEntries(
+        //             Object.entries(data.records).map(([key, value]) => [
+        //                 key.replace(/\./g, SPLITTER),
+        //                 { value },
+        //             ])
+        //         ),
+        //         ...(DEVELOPER_MODE
+        //             ? ({
+        //                   resolver: ensResolver,
+        //                   owner: ownerData,
+        //               } as Record<string, string>)
+        //             : {}),
+        //     },
+        //     chains: data.chains,
+        // } as ProfileForm,
+        defaultValues: initialDefaultValues,
     });
 
-    console.log(getValues(), data, defaultValues, profileRecords);
+    const {
+        fields: recordFields,
+        append,
+        remove,
+    } = useFieldArray({
+        control,
+        name: 'records',
+    });
+
+    console.log({ recordFields, values: getValues(), dirtyFields });
 
     return (
         <form
@@ -288,7 +417,7 @@ const ProfileRecordsSection: FC<{
             onSubmit={handleSubmit(submitHandler)}
         >
             <div className="w-full flex flex-col gap-2">
-                {profileRecords &&
+                {/* {profileRecords &&
                     Object.entries(profileRecords).map(([record, value]) => (
                         <FieldNew
                             key={record}
@@ -326,8 +455,55 @@ const ProfileRecordsSection: FC<{
                                 });
                             }}
                         />
-                    ))}
-                {profileChains &&
+                    ))} */}
+                {recordFields.map((field, index) => {
+                    const { record, id, value } = field;
+
+                    const supportedRecord: EnsRecordBase | undefined =
+                        SupportedRecords[record];
+
+                    return supportedRecord ? (
+                        <SingleField
+                            key={id}
+                            label={supportedRecord.label ?? record}
+                            icon={supportedRecord.icon}
+                            placeholder={supportedRecord.placeholder}
+                            hidden={supportedRecord.hidden}
+                            editable={editable}
+                            register={register(`records.${index}.value`)}
+                            modified={
+                                dirtyFields.records &&
+                                dirtyFields.records[index]?.value
+                            }
+                            onDelete={() => {
+                                remove(index);
+                            }}
+                            defaultValue={value}
+                        />
+                    ) : (
+                        <DoubleField
+                            key={id}
+                            label={'Custom'}
+                            editable={editable}
+                            primaryRegister={register(
+                                `records.${index}.record`
+                            )}
+                            secondaryRegister={register(
+                                `records.${index}.value`
+                            )}
+                            modified={
+                                dirtyFields.records &&
+                                (dirtyFields.records[index]?.value ||
+                                    dirtyFields.records[index]?.record)
+                            }
+                            onDelete={() => {
+                                remove(index);
+                            }}
+                            defaultValue={value}
+                        />
+                    );
+                })}
+                {/* {profileChains &&
                     Object.entries(profileChains).map(([chainId, value]) => (
                         <FieldNew
                             key={chainId}
@@ -365,7 +541,7 @@ const ProfileRecordsSection: FC<{
                                 });
                             }}
                         />
-                    ))}
+                    ))} */}
                 {
                     // Chains
                     // [
@@ -384,7 +560,7 @@ const ProfileRecordsSection: FC<{
                     //     />
                     // ))
                 }
-                {DEVELOPER_MODE && (
+                {/* {DEVELOPER_MODE && (
                     <FieldNew
                         label="Resolver"
                         record="resolver"
@@ -399,8 +575,29 @@ const ProfileRecordsSection: FC<{
                         register={register('records.owner')}
                         editable={false}
                     />
-                )}
+                )} */}
             </div>
+
+            {editable && (
+                <FloatingButton>
+                    <button
+                        className={clsx(
+                            'btn btn-pad btn-full',
+                            'btn-secondary'
+                        )}
+                        onClick={(event) => {
+                            event.preventDefault();
+
+                            append({
+                                record: '',
+                                value: '',
+                            });
+                        }}
+                    >
+                        Add record
+                    </button>
+                </FloatingButton>
+            )}
             {editable && (
                 <FloatingButton>
                     <button
@@ -454,9 +651,10 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         args: [namehash(name)],
     });
 
-    const isUsingOffchainResolver =
-        ensResolver?.toLowerCase() ===
-        '0xdCcB68ac05BB2Ee83F0873DCd0BF5F57E2968344'.toLowerCase();
+    const isUsingOffchainResolver = ensResolver
+        ? ensResolver.toLowerCase() ===
+          '0xdCcB68ac05BB2Ee83F0873DCd0BF5F57E2968344'.toLowerCase()
+        : undefined;
     const canChangeResolver =
         ownerData?.toString().toLowerCase() === address?.toLowerCase();
     const isOwner = data?.chains[60] == address;
@@ -479,7 +677,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                     value,
                 ])
             ),
-            addresses: data.chains,
+            // addresses: data.chains,
             time: Date.now(),
         };
 
@@ -495,7 +693,10 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 
     const [startAvatarFlow, setStartAvatarFlow] = useState(false);
 
-    if (!data || !ensResolver) return <div>Loading...</div>;
+    const initialDefaultValues = useDefaultValues(data, editable);
+
+    if (!data || !initialDefaultValues || !ensResolver)
+        return <div>Loading...</div>;
 
     const display_name = data?.display ?? data?.name;
     const name_split = display_name.split('.');
@@ -582,6 +783,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                 {/* record inputs */}
                 <ProfileRecordsSection
                     data={data}
+                    initialDefaultValues={initialDefaultValues}
                     editable={editable ?? false}
                     ownerData={ownerData}
                     ensResolver={ensResolver}
