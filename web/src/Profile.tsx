@@ -17,7 +17,7 @@ import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
-import { Chains, EnsRecords, SupportedRecords } from './records';
+import { EnsRecords, SupportedChains, SupportedRecords } from './records';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
@@ -61,7 +61,7 @@ const unReplacePeriods = (record: string) =>
 
 export const getProfile = async (name: string) => {
     try {
-        const request = await fetch(GATEWAY_VIEW + name);
+        // const request = await fetch(GATEWAY_VIEW + name);
 
         // const data: ProfileResponse = await request.json();
 
@@ -162,7 +162,9 @@ const ProfileRecordsSection: FC<{
     const [profileRecords, setProfileRecords] = useState<
         EnsRecords | undefined
     >();
-    const [profileChains, setProfileChains] = useState<Chains | undefined>();
+    const [profileChains, setProfileChains] = useState<
+        EnsRecords | undefined
+    >();
 
     useEffect(() => {
         if (!profileRecords) {
@@ -205,6 +207,50 @@ const ProfileRecordsSection: FC<{
             }
 
             setProfileRecords(records);
+        }
+
+        if (!profileChains) {
+            const chains: EnsRecords = {};
+
+            if (editable) {
+                for (const [chain, supportedChain] of Object.entries(
+                    SupportedChains
+                )) {
+                    if (supportedChain.type === 'recommended') {
+                        chains[chain] = supportedChain;
+                    }
+                }
+
+                for (const chain of Object.keys(data.chains)) {
+                    const supportedChain = SupportedChains[chain.toString()];
+
+                    console.log({ supportedRecord: supportedChain, chain });
+
+                    if (supportedChain?.type === 'recommended') {
+                        continue;
+                    }
+
+                    if (supportedChain?.type === 'supported') {
+                        chains[chain] = supportedChain;
+                    } else {
+                        chains[chain] = {
+                            type: 'arbitrary',
+                            hidden: false,
+                        };
+                    }
+                }
+            } else {
+                for (const chainId of Object.keys(data.chains)) {
+                    chains[chainId] = {
+                        type: 'arbitrary',
+                        hidden: false,
+                    };
+                }
+            }
+
+            console.log(chains);
+
+            setProfileChains(chains);
         }
     }, [data, editable]);
 
@@ -281,23 +327,62 @@ const ProfileRecordsSection: FC<{
                             }}
                         />
                     ))}
-                {
-                    // Chains
-                    [
-                        ['60', 'eth', 'Ethereum Address'],
-                        ['0', 'btc', 'Bitcoin Address'],
-                        ['2147483785', 'polygon', 'Polygon Address'],
-                        ['2147483658', 'optimism', 'Optimism Address'],
-                        ['2148018000', 'scroll', 'Scroll Address'],
-                    ].map(([chainId, chainName, chainLabel]) => (
+                {profileChains &&
+                    Object.entries(profileChains).map(([chainId, value]) => (
                         <FieldNew
                             key={chainId}
-                            label={chainLabel}
-                            record={chainId.toString()}
-                            register={register(`chains.${chainId.toString()}`)}
+                            record={chainId}
+                            label={value.label ?? chainId}
+                            icon={value.icon}
+                            placeholder={value.placeholder}
+                            hidden={value.hidden}
                             editable={editable}
+                            defaultValue={
+                                defaultValues?.chains &&
+                                defaultValues.chains[chainId]
+                            }
+                            register={register(
+                                // replace all periods with splitter to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form
+                                `chains.${chainId}`
+                            )}
+                            modified={
+                                dirtyFields.chains &&
+                                chainId in dirtyFields.chains
+                            }
+                            onDelete={() => {
+                                // remove record from profileRecords
+                                const newProfileChains = {
+                                    ...profileChains,
+                                };
+
+                                delete newProfileChains[chainId];
+
+                                setProfileRecords(newProfileChains);
+
+                                // remove record from form
+                                unregister(`chains.${chainId}`, {
+                                    keepDirty: true,
+                                });
+                            }}
                         />
-                    ))
+                    ))}
+                {
+                    // Chains
+                    // [
+                    //     ['60', 'eth', 'Ethereum Address'],
+                    //     ['0', 'btc', 'Bitcoin Address'],
+                    //     ['2147483785', 'polygon', 'Polygon Address'],
+                    //     ['2147483658', 'optimism', 'Optimism Address'],
+                    //     ['2148018000', 'scroll', 'Scroll Address'],
+                    // ].map(([chainId, chainName, chainLabel]) => (
+                    //     <FieldNew
+                    //         key={chainId}
+                    //         label={chainLabel}
+                    //         record={chainId.toString()}
+                    //         register={register(`chains.${chainId.toString()}`)}
+                    //         editable={editable}
+                    //     />
+                    // ))
                 }
                 {DEVELOPER_MODE && (
                     <FieldNew

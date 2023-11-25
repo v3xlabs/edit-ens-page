@@ -98,24 +98,29 @@ export type Chain = {
 
 export type Chains = Record<string, Chain>;
 
-export const SupportedChains: Chains = {
+export const SupportedChains: EnsRecords = {
     '60': {
+        type: 'recommended',
         label: 'Ethereum',
         icon: <FaEthereum />,
     },
     '0': {
+        type: 'supported',
         label: 'Bitcoin',
         icon: <FaBitcoin />,
     },
     '2147483785': {
+        type: 'supported',
         label: 'Polygon',
         icon: <FaDrawPolygon />,
     },
     '2147483658': {
+        type: 'supported',
         label: 'Optimism',
         icon: <FiGlobe />,
     },
     '2148018000': {
+        type: 'supported',
         label: 'Scroll',
         icon: <FaScroll />,
     },

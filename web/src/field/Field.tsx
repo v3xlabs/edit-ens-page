@@ -1,4 +1,4 @@
-import { BrowserSVG, PersonSVG } from '@ensdomains/thorin';
+import { BrowserSVG, CrossCircleSVG, PersonSVG } from '@ensdomains/thorin';
 import { FC, ReactNode } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 import { BsTwitterX } from 'react-icons/bs';
@@ -110,19 +110,15 @@ export const FieldNew: FC<{
 
     return (
         <div className="">
-            <label
-                className={`font-bold text-sm pl-2 py-1 block ${
-                    !defaultValue && 'text-neutral-400'
-                }`}
-            >
+            <label className={'font-bold text-sm pl-2 py-1 block'}>
                 {label}
             </label>
             <div className="relative">
                 {icon && (
                     <div
-                        className={`w-4 flex items-center justify-center left-3 top-1/2 absolute -translate-y-1/2 ${
-                            !defaultValue && 'text-neutral-400'
-                        }`}
+                        className={
+                            'w-4 flex items-center justify-center left-3 top-1/2 absolute -translate-y-1/2'
+                        }
                     >
                         {icon}
                     </div>
@@ -137,15 +133,15 @@ export const FieldNew: FC<{
                 />
                 {modified && (
                     <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2">
-                        <div className="bg-green-500 w-3 h-3 rounded-full"></div>
+                        <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
                     </div>
                 )}
                 {editable && onDelete && defaultValue && (
                     <button
-                        className="absolute top-0 bottom-0 right-0 transform -translate-x-full"
+                        className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
                         onClick={onDelete}
                     >
-                        <span className="text-red-500">X</span>
+                        <CrossCircleSVG className="mx-auto" />
                     </button>
                 )}
             </div>
