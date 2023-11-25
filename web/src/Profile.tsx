@@ -107,6 +107,7 @@ const postUpdateProfile = async (
     console.log({ response });
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const Profile: FC<{ name: string }> = ({ name }) => {
     const { data } = useSWR(name, getProfile);
     const { address } = useAccount();

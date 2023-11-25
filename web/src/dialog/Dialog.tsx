@@ -65,9 +65,11 @@ export const Dialog: FC<
                                     [
                                         {
                                             top: '0px',
+                                            opacity: 1,
                                         },
                                         {
                                             top: '-100px',
+                                            opacity: 0,
                                         },
                                     ],
                                     {
