@@ -150,6 +150,7 @@ type ProfileForm = {
     // records: Record<string, { value: string }>;
     // chains: Record<string, string>;
     records: EnsRecord[];
+    chains: EnsRecord[];
 };
 
 type test = FieldArrayPath<ProfileForm>;
@@ -275,10 +276,13 @@ const useDefaultValues = (
 
         const newDefaultValues: ProfileForm = {
             records: [],
+            chains: [],
         };
 
         if (editable) {
-            console.log('editable');
+            // ====================
+            // Records
+            // ====================
 
             // Make sure all recommended records are in the form
             for (const [record, supportedRecord] of Object.entries(
@@ -303,44 +307,57 @@ const useDefaultValues = (
                     record,
                     value,
                 });
+            }
 
-                // if (supportedRecord?.type === 'supported') {
-                //     defaultValues.records.push({
-                //         ...supportedRecord,
-                //         record,
-                //         value: data.records[record],
-                //     });
-                // } else {
-                //     defaultValues.records.push({
-                //         // type: 'arbitrary',
-                //         // hidden: false,
-                //         record,
-                //         value: data.records[record],
-                //     });
-                // }
+            // ====================
+            // Chains
+            // ====================
+
+            // Make sure all recommended chains are in the form
+            for (const [chain, supportedChain] of Object.entries(
+                SupportedChains
+            )) {
+                if (supportedChain.type === 'recommended') {
+                    newDefaultValues.chains.push({
+                        record: chain,
+                        value: data.chains[chain] ?? '',
+                    });
+                }
+            }
+
+            // Add the rest of the chains from the profile
+            for (const [chain, value] of Object.entries(data.chains)) {
+                const supportedChain = SupportedChains[chain];
+
+                if (supportedChain?.type === 'recommended') continue;
+
+                newDefaultValues.chains.push({
+                    record: chain,
+                    value,
+                });
             }
         } else {
+            // ====================
+            // Records
+            // ====================
+
+            // Add all records from the profile
             for (const [record, value] of Object.entries(data.records)) {
                 newDefaultValues.records.push({
                     record,
                     value,
                 });
-                // const supportedRecord = SupportedRecords[record];
+            }
 
-                // if (supportedRecord) {
-                //     defaultValues.records.push({
-                //         ...supportedRecord,
-                //         record,
-                //         value: data.records[record],
-                //     });
-                // } else {
-                //     defaultValues.records.push({
-                //         type: 'arbitrary',
-                //         hidden: false,
-                //         record,
-                //         value: data.records[record],
-                //     });
-                // }
+            // ====================
+            // Chains
+            // ====================
+            // Add all chains from the profile
+            for (const [chain, value] of Object.entries(data.chains)) {
+                newDefaultValues.chains.push({
+                    record: chain,
+                    value,
+                });
             }
         }
 
@@ -375,41 +392,31 @@ const ProfileRecordsSection: FC<{
     const {
         register,
         control,
-        unregister,
-        getValues,
         handleSubmit,
-        formState: { isDirty, defaultValues, dirtyFields },
+        formState: { isDirty, dirtyFields },
     } = useForm({
-        // defaultValues: {
-        //     records: {
-        //         ...Object.fromEntries(
-        //             Object.entries(data.records).map(([key, value]) => [
-        //                 key.replace(/\./g, SPLITTER),
-        //                 { value },
-        //             ])
-        //         ),
-        //         ...(DEVELOPER_MODE
-        //             ? ({
-        //                   resolver: ensResolver,
-        //                   owner: ownerData,
-        //               } as Record<string, string>)
-        //             : {}),
-        //     },
-        //     chains: data.chains,
-        // } as ProfileForm,
         defaultValues: initialDefaultValues,
     });
 
     const {
         fields: recordFields,
-        append,
-        remove,
+        append: appendRecord,
+        remove: removeRecord,
     } = useFieldArray({
         control,
         name: 'records',
     });
 
-    console.log({ recordFields, values: getValues(), dirtyFields });
+    const {
+        fields: chainFields,
+        append: appendChain,
+        remove: removeChain,
+    } = useFieldArray({
+        control,
+        name: 'chains',
+    });
+
+    console.log({ dirtyFields, recordFields, chainFields });
 
     return (
         <form
@@ -476,7 +483,7 @@ const ProfileRecordsSection: FC<{
                                 dirtyFields.records[index]?.value
                             }
                             onDelete={() => {
-                                remove(index);
+                                removeRecord(index);
                             }}
                             defaultValue={value}
                         />
@@ -497,9 +504,8 @@ const ProfileRecordsSection: FC<{
                                     dirtyFields.records[index]?.record)
                             }
                             onDelete={() => {
-                                remove(index);
+                                removeRecord(index);
                             }}
-                            defaultValue={value}
                         />
                     );
                 })}
@@ -542,24 +548,51 @@ const ProfileRecordsSection: FC<{
                             }}
                         />
                     ))} */}
-                {
-                    // Chains
-                    // [
-                    //     ['60', 'eth', 'Ethereum Address'],
-                    //     ['0', 'btc', 'Bitcoin Address'],
-                    //     ['2147483785', 'polygon', 'Polygon Address'],
-                    //     ['2147483658', 'optimism', 'Optimism Address'],
-                    //     ['2148018000', 'scroll', 'Scroll Address'],
-                    // ].map(([chainId, chainName, chainLabel]) => (
-                    //     <FieldNew
-                    //         key={chainId}
-                    //         label={chainLabel}
-                    //         record={chainId.toString()}
-                    //         register={register(`chains.${chainId.toString()}`)}
-                    //         editable={editable}
-                    //     />
-                    // ))
-                }
+
+                {chainFields.map((field, index) => {
+                    const { record, id, value } = field;
+
+                    const supportedChain: EnsRecordBase | undefined =
+                        SupportedChains[record];
+
+                    return supportedChain ? (
+                        <SingleField
+                            key={id}
+                            label={supportedChain.label ?? record}
+                            icon={supportedChain.icon}
+                            placeholder={supportedChain.placeholder}
+                            hidden={supportedChain.hidden}
+                            editable={editable}
+                            register={register(`chains.${index}.value`)}
+                            modified={
+                                dirtyFields.chains &&
+                                dirtyFields.chains[index]?.value
+                            }
+                            onDelete={() => {
+                                removeChain(index);
+                            }}
+                            defaultValue={value}
+                        />
+                    ) : (
+                        <DoubleField
+                            key={id}
+                            label={'Custom'}
+                            editable={editable}
+                            primaryRegister={register(`chains.${index}.record`)}
+                            secondaryRegister={register(
+                                `chains.${index}.value`
+                            )}
+                            modified={
+                                dirtyFields.chains &&
+                                (dirtyFields.chains[index]?.value ||
+                                    dirtyFields.chains[index]?.record)
+                            }
+                            onDelete={() => {
+                                removeChain(index);
+                            }}
+                        />
+                    );
+                })}
                 {/* {DEVELOPER_MODE && (
                     <FieldNew
                         label="Resolver"
@@ -580,22 +613,40 @@ const ProfileRecordsSection: FC<{
 
             {editable && (
                 <FloatingButton>
-                    <button
-                        className={clsx(
-                            'btn btn-pad btn-full',
-                            'btn-secondary'
-                        )}
-                        onClick={(event) => {
-                            event.preventDefault();
+                    <div className="flex space-x-4">
+                        <button
+                            className={clsx(
+                                'btn btn-pad btn-full',
+                                'btn-secondary'
+                            )}
+                            onClick={(event) => {
+                                event.preventDefault();
 
-                            append({
-                                record: '',
-                                value: '',
-                            });
-                        }}
-                    >
-                        Add record
-                    </button>
+                                appendRecord({
+                                    record: '',
+                                    value: '',
+                                });
+                            }}
+                        >
+                            Add record
+                        </button>
+                        <button
+                            className={clsx(
+                                'btn btn-pad btn-full',
+                                'btn-secondary'
+                            )}
+                            onClick={(event) => {
+                                event.preventDefault();
+
+                                appendChain({
+                                    record: '',
+                                    value: '',
+                                });
+                            }}
+                        >
+                            Add Chain
+                        </button>
+                    </div>
                 </FloatingButton>
             )}
             {editable && (

@@ -135,7 +135,7 @@ export const SingleField: FC<{
                         <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
                     </div>
                 )}
-                {editable && onDelete && defaultValue !== undefined && (
+                {editable && onDelete && defaultValue && (
                     <button
                         className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
                         onClick={onDelete}
@@ -157,7 +157,6 @@ export const DoubleField: FC<{
     icon?: ReactNode;
     placeholder?: string;
     modified?: boolean;
-    defaultValue?: string;
     onDelete?: () => void;
 }> = ({
     label,
@@ -167,7 +166,6 @@ export const DoubleField: FC<{
     icon,
     placeholder,
     modified,
-    defaultValue,
     onDelete,
 }) => {
     return (
@@ -175,7 +173,7 @@ export const DoubleField: FC<{
             <label className={'font-bold text-sm pl-2 py-1 block'}>
                 {label}
             </label>
-            <div className="relative flex space-x-5">
+            <div className="relative flex space-x-4">
                 {icon && (
                     <div
                         className={
@@ -186,13 +184,13 @@ export const DoubleField: FC<{
                     </div>
                 )}
                 <input
-                    className={'input !w-1/3'}
+                    className={`input !w-1/3 ${!icon && '!pl-3'}`}
                     placeholder={placeholder}
                     readOnly={!editable}
                     {...primaryRegister}
                 />
                 <input
-                    className={'input !w-2/3'}
+                    className={`input !w-2/3 ${!icon && '!pl-3'}`}
                     placeholder={placeholder}
                     readOnly={!editable}
                     {...secondaryRegister}
@@ -202,7 +200,7 @@ export const DoubleField: FC<{
                         <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
                     </div>
                 )}
-                {editable && onDelete && defaultValue !== undefined && (
+                {editable && onDelete && (
                     <button
                         className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
                         onClick={onDelete}
