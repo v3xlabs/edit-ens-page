@@ -3,6 +3,38 @@
 @tailwind utilities;
 @tailwind variants;
 
+@keyframes slideFromTop {
+    from {
+        opacity: 0;
+        top: -100px;
+    }
+
+    to {
+        opacity: 1;
+        top: 0px;
+    }
+}
+
+.animate-dialog {
+    /* Nice cubic besier eased animation */
+    animation: slideFromTop 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+}
+
+@keyframes backdropAnimation {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-backdrop {
+    /* Nice cubic besier eased animation */
+    animation: backdropAnimation 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+}
+
 .btn {
     @apply rounded-xl;
 }
@@ -38,3 +70,4 @@
 .input {
     @apply border bg-ens-light-background-primary dark:bg-ens-dark-background-primary border-ens-light-border dark:border-ens-dark-border pl-9 rounded-md py-2 w-full;
 }
+

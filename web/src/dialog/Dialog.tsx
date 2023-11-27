@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren, useRef } from 'react';
 import { FiX } from 'react-icons/fi';
 
 const variants = {
@@ -32,13 +32,20 @@ export const Dialog: FC<
     const vstyle = variants[variant];
     const closestyle = close_styling[closeVariant];
 
+    const dialog = useRef(null);
+    const backdrop = useRef(null);
+
     return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         <div tabIndex={-1} className="fixed z-50">
-            <div className="fixed z-0 inset-0 bg-ens-light-grey-active/20 dark:bg-ens-light-grey-active/20 backdrop-blur-md"></div>
             <div
+                ref={backdrop}
+                className="fixed z-0 inset-0 bg-ens-light-grey-active/20 dark:bg-ens-light-grey-active/20 backdrop-blur-md animate-backdrop"
+            ></div>
+            <div
+                ref={dialog}
                 className={clsx(
-                    'fixed z-10 flex items-center justify-center max-w-full',
+                    'fixed z-10 flex items-center justify-center max-w-full animate-dialog',
                     vstyle.outer
                 )}
             >
@@ -49,7 +56,42 @@ export const Dialog: FC<
                     )}
                 >
                     <button
-                        onClick={() => {
+                        onClick={async () => {
+                            const dialogElm: HTMLElement = dialog.current;
+                            const backdropElm: HTMLElement = backdrop.current;
+
+                            await Promise.all([
+                                dialogElm.animate(
+                                    [
+                                        {
+                                            top: '0px',
+                                            opacity: 1,
+                                        },
+                                        {
+                                            top: '-100px',
+                                            opacity: 0,
+                                        },
+                                    ],
+                                    {
+                                        duration: 200,
+                                        fill: 'forwards',
+                                    }
+                                ).finished,
+                                backdropElm.animate(
+                                    [
+                                        {
+                                            opacity: 1,
+                                        },
+                                        {
+                                            opacity: 0,
+                                        },
+                                    ],
+                                    {
+                                        duration: 200,
+                                        fill: 'forwards',
+                                    }
+                                ).finished,
+                            ]);
                             onClose();
                         }}
                         className={clsx('absolute', closestyle)}
