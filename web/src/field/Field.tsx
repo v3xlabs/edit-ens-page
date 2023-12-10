@@ -57,9 +57,9 @@ export const Field: FC<{
 
     return (
         <div className="">
-            <label className="font-bold text-sm pl-2 py-1 block">{label}</label>
+            <label className="block py-1 pl-2 text-sm font-bold">{label}</label>
             <div className="relative">
-                <div className="w-4 flex items-center justify-center left-3 top-1/2 absolute -translate-y-1/2">
+                <div className="absolute flex items-center justify-center w-4 -translate-y-1/2 left-3 top-1/2">
                     {field_icon}
                 </div>
                 <input
@@ -132,12 +132,12 @@ export const SingleField: FC<{
                 />
                 {modified && (
                     <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2">
-                        <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
+                        <div className="w-4 h-4 border-2 border-white rounded-full bg-ens-light-green-primary"></div>
                     </div>
                 )}
                 {editable && onDelete && defaultValue && (
                     <button
-                        className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
+                        className="absolute top-0 bottom-0 right-0 h-full aspect-square text-ens-light-text-secondary"
                         onClick={onDelete}
                     >
                         <CrossCircleSVG className="mx-auto" />
@@ -197,12 +197,12 @@ export const DoubleField: FC<{
                 />
                 {modified && (
                     <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2">
-                        <div className="bg-ens-light-green-primary w-4 h-4 rounded-full border-white border-2"></div>
+                        <div className="w-4 h-4 border-2 border-white rounded-full bg-ens-light-green-primary"></div>
                     </div>
                 )}
                 {editable && onDelete && (
                     <button
-                        className="absolute top-0 bottom-0 aspect-square right-0 text-ens-light-text-secondary"
+                        className="absolute top-0 bottom-0 right-0 h-full aspect-square text-ens-light-text-secondary"
                         onClick={onDelete}
                     >
                         <CrossCircleSVG className="mx-auto" />

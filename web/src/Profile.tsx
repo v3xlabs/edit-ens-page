@@ -1,12 +1,7 @@
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
 import { FC, PropsWithChildren, useEffect, useState } from 'react';
-import {
-    FieldArrayPath,
-    SubmitHandler,
-    useFieldArray,
-    useForm,
-} from 'react-hook-form';
+import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -24,7 +19,6 @@ import { GoGassless } from './migration/GoGassless';
 import {
     EnsRecord,
     EnsRecordBase,
-    EnsRecords,
     SupportedChains,
     SupportedRecords,
 } from './records';
@@ -62,49 +56,22 @@ const getEnstate = async (name: string) => {
     }
 };
 
-// Character to replace period with to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form. should be a random unicode character that is not used in any record name
-const SPLITTER = '⁞';
-
-const replacePeriods = (record: string) => record.replace(/\./g, SPLITTER);
-const unReplacePeriods = (record: string) =>
-    record.replace(new RegExp(SPLITTER, 'g'), '.');
-
 export const getProfile = async (name: string) => {
     try {
-        // const request = await fetch(GATEWAY_VIEW + name);
+        const request = await fetch(GATEWAY_VIEW + name);
 
-        // const data: ProfileResponse = await request.json();
+        const data: ProfileResponse = await request.json();
 
         return {
-            name: 'v3x.eth',
-            records: {
-                name: 'v3x.eth',
-                avatar: 'https://gateway.pinata.cloud/ipfs/QmVQaX2H1v6Qc723j7KQq6Q8Y8X4iCqYQ2V1xZJ6JkqL6Z',
-                url: 'https://v3x.eth.link',
-                'com.twitter': 'v3x.eth',
-                'org.telegram': 'v3x.eth',
-                'com.discord': 'v3x.eth',
-                'com.github': 'v3x.eth',
-                yeet: 'yeet',
-            },
-            chains: {
-                '60': '0xd577D1322cB22eB6EAC1a008F62b18807921EFBc',
-            },
-        } as Omit<ProfileResponse, 'addresses'> & {
-            display?: string;
-            chains: Record<string, string>;
+            ...data,
+            display:
+                data.records['display']?.toLowerCase() == name
+                    ? data.records['display']
+                    : undefined,
+            chains: data.addresses,
         };
-
-        // return {
-        //     ...data,
-        //     display:
-        //         data.records['display'].toLowerCase() == name
-        //             ? data.records['display']
-        //             : undefined,
-        //     chains: data.addresses,
-        // };
-    } catch {
-        console.log('Failed to load from ccip gateway');
+    } catch (error) {
+        console.log('Failed to load from ccip gateway', error);
     }
 
     const data = await getEnstate(name);
@@ -153,109 +120,6 @@ type ProfileForm = {
     chains: EnsRecord[];
 };
 
-type test = FieldArrayPath<ProfileForm>;
-
-const useRecords = (
-    data: Omit<ProfileResponse, 'addresses'> & {
-        display?: string;
-        chains: Record<string, string>;
-    },
-    editable: boolean
-) => {
-    const [profileRecords, setProfileRecords] = useState<EnsRecord[]>([]);
-    const [profileChains, setProfileChains] = useState<EnsRecords | undefined>(
-        []
-    );
-
-    useEffect(() => {
-        if (!profileRecords) {
-            const records: EnsRecords = {};
-
-            if (editable) {
-                for (const [record, supportedRecord] of Object.entries(
-                    SupportedRecords
-                )) {
-                    if (supportedRecord.type === 'recommended') {
-                        records[replacePeriods(record)] = supportedRecord;
-                    }
-                }
-
-                for (const record of Object.keys(data.records)) {
-                    const supportedRecord = SupportedRecords[record];
-
-                    if (supportedRecord?.type === 'recommended') {
-                        continue;
-                    }
-
-                    if (supportedRecord?.type === 'supported') {
-                        records[replacePeriods(record)] = supportedRecord;
-                    } else {
-                        records[replacePeriods(record)] = {
-                            type: 'arbitrary',
-                            hidden: false,
-                        };
-                    }
-                }
-            } else {
-                for (const record of Object.keys(data.records)) {
-                    const supportedRecord = SupportedRecords[record];
-
-                    records[replacePeriods(record)] = supportedRecord ?? {
-                        type: 'arbitrary',
-                        hidden: false,
-                    };
-                }
-            }
-
-            setProfileRecords(records);
-        }
-
-        if (!profileChains) {
-            const chains: EnsRecords = {};
-
-            if (editable) {
-                for (const [chain, supportedChain] of Object.entries(
-                    SupportedChains
-                )) {
-                    if (supportedChain.type === 'recommended') {
-                        chains[chain] = supportedChain;
-                    }
-                }
-
-                for (const chain of Object.keys(data.chains)) {
-                    const supportedChain = SupportedChains[chain.toString()];
-
-                    console.log({ supportedRecord: supportedChain, chain });
-
-                    if (supportedChain?.type === 'recommended') {
-                        continue;
-                    }
-
-                    if (supportedChain?.type === 'supported') {
-                        chains[chain] = supportedChain;
-                    } else {
-                        chains[chain] = {
-                            type: 'arbitrary',
-                            hidden: false,
-                        };
-                    }
-                }
-            } else {
-                for (const chainId of Object.keys(data.chains)) {
-                    chains[chainId] = {
-                        type: 'arbitrary',
-                        hidden: false,
-                    };
-                }
-            }
-
-            console.log(chains);
-
-            setProfileChains(chains);
-        }
-    }, [data, editable]);
-};
-
 const useDefaultValues = (
     data:
         | (Omit<ProfileResponse, 'addresses'> & {
@@ -270,8 +134,6 @@ const useDefaultValues = (
     >();
 
     useEffect(() => {
-        console.log('useDefaultValues', { data, editable, defaultValues });
-
         if (!data || defaultValues || editable === undefined) return;
 
         const newDefaultValues: ProfileForm = {
@@ -361,8 +223,6 @@ const useDefaultValues = (
             }
         }
 
-        console.log({ defaultValues: newDefaultValues });
-
         setDefaultValues(newDefaultValues);
     }, [data, editable]);
 
@@ -416,53 +276,12 @@ const ProfileRecordsSection: FC<{
         name: 'chains',
     });
 
-    console.log({ dirtyFields, recordFields, chainFields });
-
     return (
         <form
-            className="p-4 w-full space-y-4"
+            className="w-full p-4 space-y-4"
             onSubmit={handleSubmit(submitHandler)}
         >
-            <div className="w-full flex flex-col gap-2">
-                {/* {profileRecords &&
-                    Object.entries(profileRecords).map(([record, value]) => (
-                        <FieldNew
-                            key={record}
-                            record={record}
-                            label={value.label ?? record}
-                            icon={value.icon}
-                            placeholder={value.placeholder}
-                            hidden={value.hidden}
-                            editable={editable}
-                            defaultValue={
-                                defaultValues?.records &&
-                                defaultValues.records[record]
-                            }
-                            register={register(
-                                // replace all periods with splitter to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form
-                                `records.${replacePeriods(record)}`
-                            )}
-                            modified={
-                                dirtyFields.records &&
-                                replacePeriods(record) in dirtyFields.records
-                            }
-                            onDelete={() => {
-                                // remove record from profileRecords
-                                const newProfileRecords = {
-                                    ...profileRecords,
-                                };
-
-                                delete newProfileRecords[record];
-
-                                setProfileRecords(newProfileRecords);
-
-                                // remove record from form
-                                unregister(`records.${record}`, {
-                                    keepDirty: true,
-                                });
-                            }}
-                        />
-                    ))} */}
+            <div className="flex flex-col w-full gap-2">
                 {recordFields.map((field, index) => {
                     const { record, id, value } = field;
 
@@ -509,45 +328,6 @@ const ProfileRecordsSection: FC<{
                         />
                     );
                 })}
-                {/* {profileChains &&
-                    Object.entries(profileChains).map(([chainId, value]) => (
-                        <FieldNew
-                            key={chainId}
-                            record={chainId}
-                            label={value.label ?? chainId}
-                            icon={value.icon}
-                            placeholder={value.placeholder}
-                            hidden={value.hidden}
-                            editable={editable}
-                            defaultValue={
-                                defaultValues?.chains &&
-                                defaultValues.chains[chainId]
-                            }
-                            register={register(
-                                // replace all periods with splitter to prevent nesting of records lika com.twitter into { com: { twitter: ... } } in the form
-                                `chains.${chainId}`
-                            )}
-                            modified={
-                                dirtyFields.chains &&
-                                chainId in dirtyFields.chains
-                            }
-                            onDelete={() => {
-                                // remove record from profileRecords
-                                const newProfileChains = {
-                                    ...profileChains,
-                                };
-
-                                delete newProfileChains[chainId];
-
-                                setProfileRecords(newProfileChains);
-
-                                // remove record from form
-                                unregister(`chains.${chainId}`, {
-                                    keepDirty: true,
-                                });
-                            }}
-                        />
-                    ))} */}
 
                 {chainFields.map((field, index) => {
                     const { record, id, value } = field;
@@ -709,7 +489,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     const canChangeResolver =
         ownerData?.toString().toLowerCase() === address?.toLowerCase();
     const isOwner = data?.chains[60] == address;
-    const editable = address && data && isUsingOffchainResolver && isOwner;
+
+    const editable = !!address && data && isUsingOffchainResolver && isOwner;
 
     const shouldSuggestGassless =
         isEnsResolverFinished &&
@@ -722,20 +503,24 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     const mutateProfile: SubmitHandler<ProfileForm> = async (data) => {
         const payload = {
             name,
+            // Remove all records whose value is empty
             records: Object.fromEntries(
-                Object.entries(data.records).map(([key, value]) => [
-                    unReplacePeriods(key),
-                    value,
-                ])
+                data.records
+                    .filter((record) => record.value !== '')
+                    .map((record) => [record.record, record.value])
             ),
-            // addresses: data.chains,
+            addresses: Object.fromEntries(
+                data.chains
+                    .filter((chain) => chain.value !== '')
+                    .map((chain) => [chain.record, chain.value])
+            ),
+            // addresses: {},
             time: Date.now(),
         };
 
         const message = JSON.stringify(payload);
 
-        console.log('signing message');
-        // @ts-ignore
+        console.log('signing message', message);
         const x = await signMessageAsync({ message });
 
         console.log('sending message');
@@ -758,7 +543,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     return (
         <Layout>
             <div className="px-4">
-                <span className="block font-bold text-3xl">{first_half}</span>
+                <span className="block text-3xl font-bold">{first_half}</span>
                 {second_half && (
                     <span className="block text-xl">.{second_half}</span>
                 )}
@@ -771,11 +556,11 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             <img
                                 src={'https://enstate.rs/h/' + data.name}
                                 alt="banner"
-                                className="w-full h-full object-cover absolute inset-0"
+                                className="absolute inset-0 object-cover w-full h-full"
                             />
                         )}
                         {editable && (
-                            <div className="right-1 bottom-1 absolute w-8 h-8 rounded-lg bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                            <div className="absolute flex items-center justify-center w-8 h-8 rounded-lg right-1 bottom-1 bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
                                 <img
                                     src="/pencil.svg"
                                     alt="pencil"
@@ -785,8 +570,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                         )}
                     </div>
                     <div className="flex items-center justify-center -mt-20">
-                        <div className="relative aspect-square h-32 w-32">
-                            <div className="aspect-square h-32 overflow-hidden w-32 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
+                        <div className="relative w-32 h-32 aspect-square">
+                            <div className="w-32 h-32 overflow-hidden rounded-full aspect-square drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
                                 <div
                                     className="w-full h-full"
                                     style={{
@@ -801,7 +586,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                                 data.name
                                             }
                                             alt="avatar"
-                                            className="w-full h-full object-cover"
+                                            className="object-cover w-full h-full"
                                         />
                                     )}
                                 </div>
@@ -811,7 +596,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                     onClick={() => {
                                         setStartAvatarFlow(true);
                                     }}
-                                    className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center"
+                                    className="absolute flex items-center justify-center rounded-full right-1 bottom-1 w-14 h-14 bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
                                 >
                                     <img
                                         src="/pencil.svg"
@@ -848,12 +633,12 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 };
 
 export const FloatingButton: FC<PropsWithChildren<{}>> = ({ children }) => (
-    <div className="fixed md:relative bottom-0 inset-x-0 w-full">
-        <div className="relative w-full flex justify-center p-3 md:p-0">
-            <div className="z-10 w-full max-w-2xs md:max-w-full mx-auto ">
+    <div className="fixed inset-x-0 bottom-0 w-full md:relative">
+        <div className="relative flex justify-center w-full p-3 md:p-0">
+            <div className="z-10 w-full mx-auto max-w-2xs md:max-w-full ">
                 {children}
             </div>
-            <div className="md:hidden bg-gradient-to-t from-black/20 to-black/0 absolute inset-0"></div>
+            <div className="absolute inset-0 md:hidden bg-gradient-to-t from-black/20 to-black/0"></div>
         </div>
     </div>
 );
