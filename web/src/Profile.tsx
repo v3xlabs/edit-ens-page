@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
-import { FC, PropsWithChildren, useState } from 'react';
+import { FC, PropsWithChildren, useEffect, useState } from 'react';
+import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -10,12 +11,17 @@ import {
     useSignMessage,
 } from 'wagmi';
 
-import { DEVELOPER_MODE } from './App';
-import { Field } from './field/Field';
+import { DoubleField, SingleField } from './field/Field';
 import { AvatarSetFlow } from './flows/avatar/AvatarSetFlow';
 import { Footer } from './footer/Footer';
 import { Layout } from './Layout';
 import { GoGassless } from './migration/GoGassless';
+import {
+    EnsRecord,
+    EnsRecordBase,
+    SupportedChains,
+    SupportedRecords,
+} from './records';
 
 export const GATEWAY_VIEW = 'https://rs.myeth.id/view/';
 export const GATEWAY_UPDATE = 'https://rs.myeth.id/update';
@@ -59,13 +65,13 @@ export const getProfile = async (name: string) => {
         return {
             ...data,
             display:
-                data.records['display'].toLowerCase() == name
+                data.records['display']?.toLowerCase() == name
                     ? data.records['display']
                     : undefined,
             chains: data.addresses,
         };
-    } catch {
-        console.log('Failed to load from ccip gateway');
+    } catch (error) {
+        console.log('Failed to load from ccip gateway', error);
     }
 
     const data = await getEnstate(name);
@@ -107,7 +113,344 @@ const postUpdateProfile = async (
     console.log({ response });
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
+type ProfileForm = {
+    // records: Record<string, { value: string }>;
+    // chains: Record<string, string>;
+    records: EnsRecord[];
+    chains: EnsRecord[];
+};
+
+const useDefaultValues = (
+    data:
+        | (Omit<ProfileResponse, 'addresses'> & {
+              display?: string;
+              chains: Record<string, string>;
+          })
+        | undefined,
+    editable: boolean | undefined
+) => {
+    const [defaultValues, setDefaultValues] = useState<
+        ProfileForm | undefined
+    >();
+
+    useEffect(() => {
+        if (!data || defaultValues || editable === undefined) return;
+
+        const newDefaultValues: ProfileForm = {
+            records: [],
+            chains: [],
+        };
+
+        if (editable) {
+            // ====================
+            // Records
+            // ====================
+
+            // Make sure all recommended records are in the form
+            for (const [record, supportedRecord] of Object.entries(
+                SupportedRecords
+            )) {
+                if (supportedRecord.type === 'recommended') {
+                    newDefaultValues.records.push({
+                        // ...supportedRecord,
+                        record,
+                        value: data.records[record] ?? '',
+                    });
+                }
+            }
+
+            // Add the rest of the records from the profile
+            for (const [record, value] of Object.entries(data.records)) {
+                const supportedRecord = SupportedRecords[record];
+
+                if (supportedRecord?.type === 'recommended') continue;
+
+                newDefaultValues.records.push({
+                    record,
+                    value,
+                });
+            }
+
+            // ====================
+            // Chains
+            // ====================
+
+            // Make sure all recommended chains are in the form
+            for (const [chain, supportedChain] of Object.entries(
+                SupportedChains
+            )) {
+                if (supportedChain.type === 'recommended') {
+                    newDefaultValues.chains.push({
+                        record: chain,
+                        value: data.chains[chain] ?? '',
+                    });
+                }
+            }
+
+            // Add the rest of the chains from the profile
+            for (const [chain, value] of Object.entries(data.chains)) {
+                const supportedChain = SupportedChains[chain];
+
+                if (supportedChain?.type === 'recommended') continue;
+
+                newDefaultValues.chains.push({
+                    record: chain,
+                    value,
+                });
+            }
+        } else {
+            // ====================
+            // Records
+            // ====================
+
+            // Add all records from the profile
+            for (const [record, value] of Object.entries(data.records)) {
+                newDefaultValues.records.push({
+                    record,
+                    value,
+                });
+            }
+
+            // ====================
+            // Chains
+            // ====================
+            // Add all chains from the profile
+            for (const [chain, value] of Object.entries(data.chains)) {
+                newDefaultValues.chains.push({
+                    record: chain,
+                    value,
+                });
+            }
+        }
+
+        setDefaultValues(newDefaultValues);
+    }, [data, editable]);
+
+    return defaultValues;
+};
+
+const ProfileRecordsSection: FC<{
+    data: Omit<ProfileResponse, 'addresses'> & {
+        display?: string;
+        chains: Record<string, string>;
+    };
+    initialDefaultValues?: ProfileForm;
+    editable: boolean;
+    ownerData?: unknown;
+    ensResolver?: string;
+    shouldSuggestGassless?: boolean;
+    submitHandler: SubmitHandler<ProfileForm>;
+}> = ({
+    data,
+    initialDefaultValues,
+    editable,
+    ownerData,
+    ensResolver,
+    shouldSuggestGassless,
+    submitHandler,
+}) => {
+    const {
+        register,
+        control,
+        handleSubmit,
+        formState: { isDirty, dirtyFields },
+    } = useForm({
+        defaultValues: initialDefaultValues,
+    });
+
+    const {
+        fields: recordFields,
+        append: appendRecord,
+        remove: removeRecord,
+    } = useFieldArray({
+        control,
+        name: 'records',
+    });
+
+    const {
+        fields: chainFields,
+        append: appendChain,
+        remove: removeChain,
+    } = useFieldArray({
+        control,
+        name: 'chains',
+    });
+
+    return (
+        <form
+            className="w-full p-4 space-y-4"
+            onSubmit={handleSubmit(submitHandler)}
+        >
+            <div className="flex flex-col w-full gap-2">
+                {recordFields.map((field, index) => {
+                    const { record, id, value } = field;
+
+                    const supportedRecord: EnsRecordBase | undefined =
+                        SupportedRecords[record];
+
+                    return supportedRecord ? (
+                        <SingleField
+                            key={id}
+                            label={supportedRecord.label ?? record}
+                            icon={supportedRecord.icon}
+                            placeholder={supportedRecord.placeholder}
+                            hidden={supportedRecord.hidden}
+                            editable={editable}
+                            register={register(`records.${index}.value`)}
+                            modified={
+                                dirtyFields.records &&
+                                dirtyFields.records[index]?.value
+                            }
+                            onDelete={() => {
+                                removeRecord(index);
+                            }}
+                            defaultValue={value}
+                        />
+                    ) : (
+                        <DoubleField
+                            key={id}
+                            label={'Custom'}
+                            editable={editable}
+                            primaryRegister={register(
+                                `records.${index}.record`
+                            )}
+                            secondaryRegister={register(
+                                `records.${index}.value`
+                            )}
+                            modified={
+                                dirtyFields.records &&
+                                (dirtyFields.records[index]?.value ||
+                                    dirtyFields.records[index]?.record)
+                            }
+                            onDelete={() => {
+                                removeRecord(index);
+                            }}
+                        />
+                    );
+                })}
+
+                {chainFields.map((field, index) => {
+                    const { record, id, value } = field;
+
+                    const supportedChain: EnsRecordBase | undefined =
+                        SupportedChains[record];
+
+                    return supportedChain ? (
+                        <SingleField
+                            key={id}
+                            label={supportedChain.label ?? record}
+                            icon={supportedChain.icon}
+                            placeholder={supportedChain.placeholder}
+                            hidden={supportedChain.hidden}
+                            editable={editable}
+                            register={register(`chains.${index}.value`)}
+                            modified={
+                                dirtyFields.chains &&
+                                dirtyFields.chains[index]?.value
+                            }
+                            onDelete={() => {
+                                removeChain(index);
+                            }}
+                            defaultValue={value}
+                        />
+                    ) : (
+                        <DoubleField
+                            key={id}
+                            label={'Custom'}
+                            editable={editable}
+                            primaryRegister={register(`chains.${index}.record`)}
+                            secondaryRegister={register(
+                                `chains.${index}.value`
+                            )}
+                            modified={
+                                dirtyFields.chains &&
+                                (dirtyFields.chains[index]?.value ||
+                                    dirtyFields.chains[index]?.record)
+                            }
+                            onDelete={() => {
+                                removeChain(index);
+                            }}
+                        />
+                    );
+                })}
+                {/* {DEVELOPER_MODE && (
+                    <FieldNew
+                        label="Resolver"
+                        record="resolver"
+                        editable={false}
+                        register={register('records.resolver')}
+                    />
+                )}
+                {DEVELOPER_MODE && ownerData && (
+                    <FieldNew
+                        label="Owner"
+                        record="owner"
+                        register={register('records.owner')}
+                        editable={false}
+                    />
+                )} */}
+            </div>
+
+            {editable && (
+                <FloatingButton>
+                    <div className="flex space-x-4">
+                        <button
+                            className={clsx(
+                                'btn btn-pad btn-full',
+                                'btn-secondary'
+                            )}
+                            onClick={(event) => {
+                                event.preventDefault();
+
+                                appendRecord({
+                                    record: '',
+                                    value: '',
+                                });
+                            }}
+                        >
+                            Add record
+                        </button>
+                        <button
+                            className={clsx(
+                                'btn btn-pad btn-full',
+                                'btn-secondary'
+                            )}
+                            onClick={(event) => {
+                                event.preventDefault();
+
+                                appendChain({
+                                    record: '',
+                                    value: '',
+                                });
+                            }}
+                        >
+                            Add Chain
+                        </button>
+                    </div>
+                </FloatingButton>
+            )}
+            {editable && (
+                <FloatingButton>
+                    <button
+                        className={clsx(
+                            'btn btn-pad btn-full',
+                            isDirty ? 'btn-primary' : 'btn-disabled'
+                        )}
+                        disabled={!isDirty}
+                    >
+                        Update profile
+                    </button>
+                </FloatingButton>
+            )}
+            {shouldSuggestGassless && (
+                <FloatingButton>
+                    <GoGassless name={data.name} />
+                </FloatingButton>
+            )}
+        </form>
+    );
+};
+
 export const Profile: FC<{ name: string }> = ({ name }) => {
     const { data } = useSWR(name, getProfile);
     const { address } = useAccount();
@@ -139,13 +482,15 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         args: [namehash(name)],
     });
 
-    const isUsingOffchainResolver =
-        ensResolver?.toLowerCase() ===
-        '0xdCcB68ac05BB2Ee83F0873DCd0BF5F57E2968344'.toLowerCase();
+    const isUsingOffchainResolver = ensResolver
+        ? ensResolver.toLowerCase() ===
+          '0xdCcB68ac05BB2Ee83F0873DCd0BF5F57E2968344'.toLowerCase()
+        : undefined;
     const canChangeResolver =
         ownerData?.toString().toLowerCase() === address?.toLowerCase();
     const isOwner = data?.chains[60] == address;
-    const editable = address && data && isUsingOffchainResolver && isOwner;
+
+    const editable = !!address && data && isUsingOffchainResolver && isOwner;
 
     const shouldSuggestGassless =
         isEnsResolverFinished &&
@@ -153,37 +498,30 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
         isOwner &&
         canChangeResolver;
 
-    const newPayload = {
-        records: {
-            name: 'v3x.eth',
-            avatar: 'https://gateway.pinata.cloud/ipfs/QmVQaX2H1v6Qc7z3j7KQq6Q8Y8X4iCqYQ2V1xZJ6JkqL6Z',
-            url: 'https://v3x.eth.link',
-            'com.twitter': 'v3x.eth',
-            'org.telegram': 'v3x.eth',
-            'com.discord': 'v3x.eth',
-            'com.github': 'v3x.eth',
-        },
-        addresses: {
-            '60': '0x225f137127d9067788314bc7fcc1f36746a3c3B5',
-        },
-    };
+    const { signMessageAsync } = useSignMessage();
 
-    const payload = {
-        name,
-        records: newPayload.records,
-        addresses: newPayload.addresses,
-        time: Date.now(),
-    };
-    const message = JSON.stringify(payload);
+    const mutateProfile: SubmitHandler<ProfileForm> = async (data) => {
+        const payload = {
+            name,
+            // Remove all records whose value is empty
+            records: Object.fromEntries(
+                data.records
+                    .filter((record) => record.value !== '')
+                    .map((record) => [record.record, record.value])
+            ),
+            addresses: Object.fromEntries(
+                data.chains
+                    .filter((chain) => chain.value !== '')
+                    .map((chain) => [chain.record, chain.value])
+            ),
+            // addresses: {},
+            time: Date.now(),
+        };
 
-    const { signMessageAsync } = useSignMessage({
-        message,
-    });
+        const message = JSON.stringify(payload);
 
-    const mutateProfile = async () => {
-        console.log('signing message');
-        // @ts-ignore
-        const x = await signMessageAsync();
+        console.log('signing message', message);
+        const x = await signMessageAsync({ message });
 
         console.log('sending message');
         await postUpdateProfile(name, message, x);
@@ -191,9 +529,10 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 
     const [startAvatarFlow, setStartAvatarFlow] = useState(false);
 
-    const hasChanges = true;
+    const initialDefaultValues = useDefaultValues(data, editable);
 
-    if (!data) return <div>Loading...</div>;
+    if (!data || !initialDefaultValues || !ensResolver)
+        return <div>Loading...</div>;
 
     const display_name = data?.display ?? data?.name;
     const name_split = display_name.split('.');
@@ -204,7 +543,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
     return (
         <Layout>
             <div className="px-4">
-                <span className="block font-bold text-3xl">{first_half}</span>
+                <span className="block text-3xl font-bold">{first_half}</span>
                 {second_half && (
                     <span className="block text-xl">.{second_half}</span>
                 )}
@@ -217,11 +556,11 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                             <img
                                 src={'https://enstate.rs/h/' + data.name}
                                 alt="banner"
-                                className="w-full h-full object-cover absolute inset-0"
+                                className="absolute inset-0 object-cover w-full h-full"
                             />
                         )}
                         {editable && (
-                            <div className="right-1 bottom-1 absolute w-8 h-8 rounded-lg bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center">
+                            <div className="absolute flex items-center justify-center w-8 h-8 rounded-lg right-1 bottom-1 bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent">
                                 <img
                                     src="/pencil.svg"
                                     alt="pencil"
@@ -231,8 +570,8 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                         )}
                     </div>
                     <div className="flex items-center justify-center -mt-20">
-                        <div className="relative aspect-square h-32 w-32">
-                            <div className="aspect-square h-32 overflow-hidden w-32 rounded-full drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
+                        <div className="relative w-32 h-32 aspect-square">
+                            <div className="w-32 h-32 overflow-hidden rounded-full aspect-square drop-shadow-md bg-ens-light-background-secondary dark:bg-ens-dark-background-secondary">
                                 <div
                                     className="w-full h-full"
                                     style={{
@@ -247,7 +586,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                                 data.name
                                             }
                                             alt="avatar"
-                                            className="w-full h-full object-cover"
+                                            className="object-cover w-full h-full"
                                         />
                                     )}
                                 </div>
@@ -257,7 +596,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                                     onClick={() => {
                                         setStartAvatarFlow(true);
                                     }}
-                                    className="right-1 bottom-1 absolute w-14 h-14 rounded-full bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent flex items-center justify-center"
+                                    className="absolute flex items-center justify-center rounded-full right-1 bottom-1 w-14 h-14 bg-ens-light-blue-primary dark:bg-ens-dark-blue-primary text-ens-light-text-accent dark:text-ens-dark-text-accent"
                                 >
                                     <img
                                         src="/pencil.svg"
@@ -277,123 +616,16 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
                         </div>
                     </div>
                 </div>
-                <div className="p-4 w-full space-y-4">
-                    <div className="w-full flex flex-col gap-2">
-                        <Field
-                            label="Display Name"
-                            record="name"
-                            value={data.records['name']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Pronouns"
-                            record="pronouns"
-                            value={data.records['pronouns']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Description"
-                            record="description"
-                            value={data.records['description']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Website"
-                            record="url"
-                            value={data.records['url']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="X"
-                            record="com.twitter"
-                            value={data.records['com.twitter']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Telegram"
-                            record="org.telegram"
-                            value={data.records['org.telegram']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Timezone"
-                            record="timezone"
-                            value={data.records['timezone']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Discord"
-                            record="com.discord"
-                            value={data.records['com.discord']}
-                            editable={editable}
-                        />
-                        <Field
-                            label="Github"
-                            record="com.github"
-                            value={data.records['com.github']}
-                            editable={editable}
-                        />
-                        {
-                            // Chains
-                            [
-                                ['60', 'eth', 'Ethereum Address'],
-                                ['0', 'btc', 'Bitcoin Address'],
-                                ['2147483785', 'polygon', 'Polygon Address'],
-                                ['2147483658', 'optimism', 'Optimism Address'],
-                                ['2148018000', 'scroll', 'Scroll Address'],
-                            ].map(([chainId, chainName, chainLabel]) => (
-                                <Field
-                                    key={chainId}
-                                    label={chainLabel}
-                                    record={chainId.toString()}
-                                    value={
-                                        data?.chains[chainId.toString()] ??
-                                        data?.chains[chainName]
-                                    }
-                                    editable={editable}
-                                />
-                            ))
-                        }
-                        {DEVELOPER_MODE && (
-                            <Field
-                                label="Resolver"
-                                record="resolver"
-                                editable={false}
-                                value={ensResolver ?? '...'}
-                            />
-                        )}
-                        {DEVELOPER_MODE && ownerData && (
-                            <Field
-                                label="Owner"
-                                record="owner"
-                                editable={false}
-                                value={ownerData.toString()}
-                            />
-                        )}
-                    </div>
-                    {editable && (
-                        <FloatingButton>
-                            <button
-                                className={clsx(
-                                    'btn btn-pad btn-full',
-                                    hasChanges ? 'btn-primary' : 'btn-disabled'
-                                )}
-                                onClick={() => {
-                                    mutateProfile();
-                                    // hasChanges && mutateProfile();
-                                }}
-                                disabled={!hasChanges}
-                            >
-                                Update profile
-                            </button>
-                        </FloatingButton>
-                    )}
-                    {shouldSuggestGassless && (
-                        <FloatingButton>
-                            <GoGassless name={name} />
-                        </FloatingButton>
-                    )}
-                </div>
+                {/* record inputs */}
+                <ProfileRecordsSection
+                    data={data}
+                    initialDefaultValues={initialDefaultValues}
+                    editable={editable ?? false}
+                    ownerData={ownerData}
+                    ensResolver={ensResolver}
+                    shouldSuggestGassless={shouldSuggestGassless}
+                    submitHandler={mutateProfile}
+                />
             </div>
             <Footer />
         </Layout>
@@ -401,12 +633,12 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 };
 
 export const FloatingButton: FC<PropsWithChildren<{}>> = ({ children }) => (
-    <div className="fixed md:relative bottom-0 inset-x-0 w-full">
-        <div className="relative w-full flex justify-center p-3 md:p-0">
-            <div className="z-10 w-full max-w-2xs md:max-w-full mx-auto ">
+    <div className="fixed inset-x-0 bottom-0 w-full md:relative">
+        <div className="relative flex justify-center w-full p-3 md:p-0">
+            <div className="z-10 w-full mx-auto max-w-2xs md:max-w-full ">
                 {children}
             </div>
-            <div className="md:hidden bg-gradient-to-t from-black/20 to-black/0 absolute inset-0"></div>
+            <div className="absolute inset-0 md:hidden bg-gradient-to-t from-black/20 to-black/0"></div>
         </div>
     </div>
 );
