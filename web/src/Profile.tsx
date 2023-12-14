@@ -1,7 +1,16 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable unicorn/prefer-object-from-entries */
 import { clsx } from 'clsx';
 import { FC, PropsWithChildren, useEffect, useState } from 'react';
-import { SubmitHandler, useFieldArray, useForm } from 'react-hook-form';
+import {
+    FieldArrayWithId,
+    FieldErrors,
+    SubmitHandler,
+    useFieldArray,
+    useForm,
+    UseFormGetValues,
+    UseFormRegister,
+} from 'react-hook-form';
 import useSWR from 'swr';
 import { namehash } from 'viem';
 import {
@@ -133,6 +142,7 @@ const useDefaultValues = (
         ProfileForm | undefined
     >();
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     useEffect(() => {
         if (!data || defaultValues || editable === undefined) return;
 
@@ -229,6 +239,105 @@ const useDefaultValues = (
     return defaultValues;
 };
 
+const Record: FC<{
+    type: 'records' | 'chains';
+    field: FieldArrayWithId<ProfileForm, 'records', 'id'>;
+    index: number;
+    editable: boolean;
+    register: UseFormRegister<ProfileForm>;
+    dirtyFields: any;
+    errors: FieldErrors<ProfileForm>;
+    removeRecord: (index: number) => void;
+    getValues: UseFormGetValues<ProfileForm>;
+}> = ({
+    type,
+    field,
+    index,
+    editable,
+    register,
+    dirtyFields,
+    errors,
+    removeRecord,
+    getValues,
+}) => {
+    const { id, value } = field;
+    const [record, setRecord] = useState(field.record);
+
+    const SupportedList =
+        type === 'records' ? SupportedRecords : SupportedChains;
+
+    const supportedRecord: EnsRecordBase | undefined = SupportedList[record];
+
+    if (supportedRecord) {
+        return (
+            <SingleField
+                key={id}
+                label={supportedRecord.label ?? record}
+                icon={supportedRecord.icon}
+                placeholder={supportedRecord.placeholder}
+                hidden={supportedRecord.hidden}
+                editable={editable}
+                register={register(`${type}.${index}.value`)}
+                modified={dirtyFields[type] && dirtyFields[type][index]?.value}
+                onDelete={() => {
+                    removeRecord(index);
+                }}
+                defaultValue={value}
+                deletable={supportedRecord.type !== 'recommended'}
+            />
+        );
+    }
+
+    return (
+        <DoubleField
+            key={id}
+            label={type === 'records' ? 'Record' : 'Chain'}
+            editable={editable}
+            error={{
+                primary: !!errors.records?.[index]?.record,
+                secondary: !!errors.records?.[index]?.value,
+            }}
+            primaryRegister={register(`${type}.${index}.record`, {
+                onBlur: (event) => {
+                    const value = event?.target?.value;
+
+                    if (!value || !(value in SupportedList)) return;
+
+                    setRecord(value);
+
+                    const recordIndices: Record<string, number> = {};
+
+                    for (const [index, record] of getValues(type).entries()) {
+                        const { record: recordKey } = record;
+
+                        if (recordKey in recordIndices) {
+                            const lastIndex = recordIndices[recordKey];
+
+                            if (lastIndex !== index) {
+                                removeRecord(index);
+                            }
+                        }
+
+                        recordIndices[recordKey] = index;
+                    }
+                },
+            })}
+            secondaryRegister={register(`records.${index}.value`, {
+                minLength: 4,
+                required: true,
+            })}
+            modified={
+                dirtyFields.records &&
+                (dirtyFields.records[index]?.value ||
+                    dirtyFields.records[index]?.record)
+            }
+            onDelete={() => {
+                removeRecord(index);
+            }}
+        />
+    );
+};
+
 const ProfileRecordsSection: FC<{
     data: Omit<ProfileResponse, 'addresses'> & {
         display?: string;
@@ -253,7 +362,8 @@ const ProfileRecordsSection: FC<{
         register,
         control,
         handleSubmit,
-        formState: { isDirty, dirtyFields },
+        formState: { isDirty, dirtyFields, errors },
+        getValues,
     } = useForm({
         defaultValues: initialDefaultValues,
     });
@@ -282,97 +392,35 @@ const ProfileRecordsSection: FC<{
             onSubmit={handleSubmit(submitHandler)}
         >
             <div className="flex flex-col w-full gap-2">
-                {recordFields.map((field, index) => {
-                    const { record, id, value } = field;
+                {recordFields.map((field, index) => (
+                    <Record
+                        type="records"
+                        key={field.id}
+                        field={field}
+                        index={index}
+                        editable={editable}
+                        register={register}
+                        dirtyFields={dirtyFields}
+                        errors={errors}
+                        removeRecord={removeRecord}
+                        getValues={getValues}
+                    />
+                ))}
 
-                    const supportedRecord: EnsRecordBase | undefined =
-                        SupportedRecords[record];
-
-                    return supportedRecord ? (
-                        <SingleField
-                            key={id}
-                            label={supportedRecord.label ?? record}
-                            icon={supportedRecord.icon}
-                            placeholder={supportedRecord.placeholder}
-                            hidden={supportedRecord.hidden}
-                            editable={editable}
-                            register={register(`records.${index}.value`)}
-                            modified={
-                                dirtyFields.records &&
-                                dirtyFields.records[index]?.value
-                            }
-                            onDelete={() => {
-                                removeRecord(index);
-                            }}
-                            defaultValue={value}
-                        />
-                    ) : (
-                        <DoubleField
-                            key={id}
-                            label={'Custom'}
-                            editable={editable}
-                            primaryRegister={register(
-                                `records.${index}.record`
-                            )}
-                            secondaryRegister={register(
-                                `records.${index}.value`
-                            )}
-                            modified={
-                                dirtyFields.records &&
-                                (dirtyFields.records[index]?.value ||
-                                    dirtyFields.records[index]?.record)
-                            }
-                            onDelete={() => {
-                                removeRecord(index);
-                            }}
-                        />
-                    );
-                })}
-
-                {chainFields.map((field, index) => {
-                    const { record, id, value } = field;
-
-                    const supportedChain: EnsRecordBase | undefined =
-                        SupportedChains[record];
-
-                    return supportedChain ? (
-                        <SingleField
-                            key={id}
-                            label={supportedChain.label ?? record}
-                            icon={supportedChain.icon}
-                            placeholder={supportedChain.placeholder}
-                            hidden={supportedChain.hidden}
-                            editable={editable}
-                            register={register(`chains.${index}.value`)}
-                            modified={
-                                dirtyFields.chains &&
-                                dirtyFields.chains[index]?.value
-                            }
-                            onDelete={() => {
-                                removeChain(index);
-                            }}
-                            defaultValue={value}
-                        />
-                    ) : (
-                        <DoubleField
-                            key={id}
-                            label={'Custom'}
-                            editable={editable}
-                            primaryRegister={register(`chains.${index}.record`)}
-                            secondaryRegister={register(
-                                `chains.${index}.value`
-                            )}
-                            modified={
-                                dirtyFields.chains &&
-                                (dirtyFields.chains[index]?.value ||
-                                    dirtyFields.chains[index]?.record)
-                            }
-                            onDelete={() => {
-                                removeChain(index);
-                            }}
-                        />
-                    );
-                })}
+                {chainFields.map((field, index) => (
+                    <Record
+                        type="chains"
+                        key={field.id}
+                        field={field}
+                        index={index}
+                        editable={editable}
+                        register={register}
+                        dirtyFields={dirtyFields}
+                        errors={errors}
+                        removeRecord={removeChain}
+                        getValues={getValues}
+                    />
+                ))}
                 {/* {DEVELOPER_MODE && (
                     <FieldNew
                         label="Resolver"
@@ -520,7 +568,7 @@ export const Profile: FC<{ name: string }> = ({ name }) => {
 
         const message = JSON.stringify(payload);
 
-        console.log('signing message', message);
+        console.log('signing message', payload);
         const x = await signMessageAsync({ message });
 
         console.log('sending message');

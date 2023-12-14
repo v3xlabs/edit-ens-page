@@ -85,6 +85,7 @@ export const SingleField: FC<{
     modified?: boolean;
     defaultValue?: string;
     onDelete?: () => void;
+    deletable?: boolean;
 }> = ({
     label,
     editable,
@@ -95,6 +96,7 @@ export const SingleField: FC<{
     modified,
     defaultValue,
     onDelete,
+    deletable,
 }) => {
     if (hidden)
         return (
@@ -135,7 +137,7 @@ export const SingleField: FC<{
                         <div className="w-4 h-4 border-2 border-white rounded-full bg-ens-light-green-primary"></div>
                     </div>
                 )}
-                {editable && onDelete && defaultValue && (
+                {editable && onDelete && deletable && (
                     <button
                         className="absolute top-0 bottom-0 right-0 h-full aspect-square text-ens-light-text-secondary"
                         onClick={onDelete}
@@ -158,6 +160,7 @@ export const DoubleField: FC<{
     placeholder?: string;
     modified?: boolean;
     onDelete?: () => void;
+    error: { primary: boolean; secondary: boolean };
 }> = ({
     label,
     editable,
@@ -167,6 +170,7 @@ export const DoubleField: FC<{
     placeholder,
     modified,
     onDelete,
+    error,
 }) => {
     return (
         <div className="">
@@ -184,13 +188,17 @@ export const DoubleField: FC<{
                     </div>
                 )}
                 <input
-                    className={`input !w-1/3 ${!icon && '!pl-3'}`}
+                    className={`input !w-1/3 ${!icon && '!pl-3'} ${
+                        error.primary && 'border-red-500'
+                    }`}
                     placeholder={placeholder}
                     readOnly={!editable}
                     {...primaryRegister}
                 />
                 <input
-                    className={`input !w-2/3 ${!icon && '!pl-3'}`}
+                    className={`input !w-2/3 ${!icon && '!pl-3'} ${
+                        error.secondary && 'border-red-500'
+                    }`}
                     placeholder={placeholder}
                     readOnly={!editable}
                     {...secondaryRegister}
