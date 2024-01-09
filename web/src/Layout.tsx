@@ -3,10 +3,12 @@ import { MenuSVG } from '@ensdomains/thorin';
 import { FC, PropsWithChildren, useState } from 'react';
 
 import { Header } from './header/Header';
+import { ProfilePage } from './user/ProfilePage';
 import { UserProfile } from './UserProfile';
 
 export const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
     const [headerExpanded, setHeaderExpanded] = useState(false);
+    const [userExanded, setUserExpanded] = useState(false);
 
     return (
         <>
@@ -14,6 +16,13 @@ export const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
                 <Header
                     onClose={() => {
                         setHeaderExpanded(false);
+                    }}
+                />
+            )}
+            {userExanded && (
+                <ProfilePage
+                    onClose={() => {
+                        setUserExpanded(false);
                     }}
                 />
             )}
@@ -32,7 +41,11 @@ export const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
                         </button>
                     </div>
                     <div className="h-12">
-                        <UserProfile />
+                        <UserProfile
+                            onClick={() => {
+                                setUserExpanded(true);
+                            }}
+                        />
                     </div>
                 </div>
                 {children}
